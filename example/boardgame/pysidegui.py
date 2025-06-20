@@ -77,6 +77,7 @@ class BoardGameApp(QMainWindow):
         '''创建菜单栏'''
         # 添加菜单栏
         menu_bar = self.menuBar()
+        menu_bar.setStyleSheet(MenuBarStyle)
         game_menu = menu_bar.addMenu("游戏")
         game_menu.addAction("新游戏", self.new_game)
         game_menu.addAction("切换游戏", self.switch_game)
@@ -388,7 +389,7 @@ class AppCanvas(QGraphicsView):
         for pt in pts:
             if self.app.show_piece_index:
                 pieceui.index_text = str(self.app.get_piece_index(pt))
-                if pieceui.index_text == '1':
+                if pieceui.index_text in ['1', '0']:
                     self.clear_index_text()
             new_piece = PieceItem(pieceui = pieceui)
             new_piece.setZValue(LAYER_PIECES)

@@ -114,5 +114,5 @@ class App_六人跳棋(Application):
             'coor_show': LinePositionEnum.Null,
             'bgedges_show': AxisEnum.Null, 
             'canvas_image': Path(__file__).parent/'images/六人跳棋棋盘.png',
-            'image_dsize': (18, 0), "image_origin": (0, -5)
+            'image_dsize': (18, 20), "image_origin": (0, -5)
             }

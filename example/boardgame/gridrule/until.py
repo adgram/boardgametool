@@ -294,7 +294,10 @@ class History:
         return self.move_history.simplify_history()
 
     def get_current_path_length_from_branch(self):
-        return self.move_history.get_path_from_branch(self.move_history.current)[1]
+        node = self.move_history.current
+        if node.index == -1:
+            return 0
+        return self.move_history.get_path_from_branch(node)[1]
 
 
 ClockStrSignals = GenericSignal[str, str]

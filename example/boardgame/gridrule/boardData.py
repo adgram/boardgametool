@@ -263,7 +263,7 @@ class Application:
 
     @property
     def player_names(self):
-        return list(self.gamerule.players.keys())
+        return [name for name in self.gamerule.players.keys() if name != '_common_']
     
     def gameover_tag_name(self, tag):
         match tag:

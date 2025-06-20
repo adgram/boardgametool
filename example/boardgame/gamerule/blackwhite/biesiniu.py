@@ -43,12 +43,12 @@ class Game_憋死牛(GameData):
     def init_gridattr(self):
         self.default_piece_pts = {1: [(0, 0), (2, 0)], 2: [(0, 2), (2, 2)]}
         region = RegionPoints([(0, 0), (2, 0), (1, 1), (0, 2), (2, 2)])
-        neighbortable = NeighborTable.create_from_edges(
-                    {(0, 0): ((0, 2), (2, 0), (1, 1)),
-                    (0, 2): ((0, 0), (1, 1)),
-                    (1, 1): ((0, 0), (2, 0), (0, 2), (2, 2)),
-                    (2, 0): ((0, 0), (2, 2), (1, 1)),
-                    (2, 2): ((2, 0), (1, 1))}
+        neighbortable = NeighborTable.link_only(
+                    {Vector2D(0, 0): {Vector2D(0, 2), Vector2D(2, 0), Vector2D(1, 1)},
+                    Vector2D(0, 2): {Vector2D(0, 0), Vector2D(1, 1)},
+                    Vector2D(1, 1): {Vector2D(0, 0), Vector2D(2, 0), Vector2D(0, 2), Vector2D(2, 2)},
+                    Vector2D(2, 0): {Vector2D(0, 0), Vector2D(2, 2), Vector2D(1, 1)},
+                    Vector2D(2, 2): {Vector2D(2, 0), Vector2D(1, 1)}}
                )
         return {'matr': MatrixP((3, 3), region, neighbortable)}
 
@@ -69,7 +69,7 @@ class App_憋死牛(AppBlackWhite):
     
     def grid_attr(self):
         return {'size': (3, 3), 'canvas_size': (750, 750),
-                'padding': (150, 150), 'is_net': True}
+                'padding': (200, 200), 'is_net': True}
     
     def canvas_attr(self):
         return {'coor_show': LinePositionEnum.Null,
@@ -194,17 +194,17 @@ class Game_四和棋(GameData):
                                (1, 0), (1, 1), (1, 2),
                                (2, 0), (2, 1), (2, 2),
                                (3, 0), (3, 2)])
-        neighbortable = NeighborTable.create_from_edges(
-                    {(0, 0): [(0, 2), (1, 0)],
-                     (0, 2): [(0, 0), (1, 2)],
-                     (1, 0): [(0, 0), (2, 0), (1, 1)],
-                     (1, 1): [(1, 2), (1, 0), (2, 1)],
-                     (1, 2): [(0, 2), (1, 1), (2, 2)],
-                     (2, 0): [(1, 0), (3, 0), (2, 1)],
-                     (2, 1): [(2, 2), (2, 0), (1, 1)],
-                     (2, 2): [(1, 2), (2, 1), (3, 2)],
-                     (3, 0): [(3, 2), (2, 0)],
-                     (3, 2): [(2, 2), (3, 0)]}
+        neighbortable = NeighborTable.link_only(
+                    {Vector2D(0, 0): {Vector2D(0, 2), Vector2D(1, 0)},
+                     Vector2D(0, 2): {Vector2D(0, 0), Vector2D(1, 2)},
+                     Vector2D(1, 0): {Vector2D(0, 0), Vector2D(2, 0), Vector2D(1, 1)},
+                     Vector2D(1, 1): {Vector2D(1, 2), Vector2D(1, 0), Vector2D(2, 1)},
+                     Vector2D(1, 2): {Vector2D(0, 2), Vector2D(1, 1), Vector2D(2, 2)},
+                     Vector2D(2, 0): {Vector2D(1, 0), Vector2D(3, 0), Vector2D(2, 1)},
+                     Vector2D(2, 1): {Vector2D(2, 2), Vector2D(2, 0), Vector2D(1, 1)},
+                     Vector2D(2, 2): {Vector2D(1, 2), Vector2D(2, 1), Vector2D(3, 2)},
+                     Vector2D(3, 0): {Vector2D(3, 2), Vector2D(2, 0)},
+                     Vector2D(3, 2): {Vector2D(2, 2), Vector2D(3, 0)}}
                )
         return {'matr': MatrixP((4, 3), region, neighbortable)}
 
@@ -477,16 +477,18 @@ class Game_八角棋(GameData):
         self.default_piece_pts = {1: [(0, 1), (1, 4), (3, 0), (4, 3)],
                                   2: [(0, 3), (1, 0), (3, 4), (4, 1)]}
         region = RegionPoints([(2, 2), (0, 1), (1, 4), (3, 0), (4, 3), (0, 3), (1, 0), (3, 4), (4, 1)])
-        neighbortable = NeighborTable.create_from_edges(
-                    {(0, 1): ((0, 3), (1, 0), (2, 2)),
-                    (0, 3): ((0, 1), (1, 4), (2, 2)),
-                    (1, 0): ((0, 1), (3, 0), (2, 2)),
-                    (1, 4): ((0, 3), (3, 4), (2, 2)),
-                    (3, 0): ((1, 0), (4, 1), (2, 2)),
-                    (3, 4): ((1, 4), (4, 3), (2, 2)),
-                    (4, 1): ((0, 3), (4, 3), (2, 2)),
-                    (4, 3): ((4, 1), (3, 4), (2, 2)),
-                    (2, 2): ((0, 1), (1, 4), (3, 0), (4, 3), (0, 3), (1, 0), (3, 4), (4, 1))}
+        neighbortable = NeighborTable.link_only(
+                    {Vector2D(0, 1): {Vector2D(0, 3), Vector2D(1, 0), Vector2D(2, 2)},
+                    Vector2D(0, 3): {Vector2D(0, 1), Vector2D(1, 4), Vector2D(2, 2)},
+                    Vector2D(1, 0): {Vector2D(0, 1), Vector2D(3, 0), Vector2D(2, 2)},
+                    Vector2D(1, 4): {Vector2D(0, 3), Vector2D(3, 4), Vector2D(2, 2)},
+                    Vector2D(3, 0): {Vector2D(1, 0), Vector2D(4, 1), Vector2D(2, 2)},
+                    Vector2D(3, 4): {Vector2D(1, 4), Vector2D(4, 3), Vector2D(2, 2)},
+                    Vector2D(4, 1): {Vector2D(0, 3), Vector2D(4, 3), Vector2D(2, 2)},
+                    Vector2D(4, 3): {Vector2D(4, 1), Vector2D(3, 4), Vector2D(2, 2)},
+                    Vector2D(2, 2): {Vector2D(0, 1), Vector2D(1, 4), Vector2D(3, 0),
+                                     Vector2D(4, 3), Vector2D(0, 3), Vector2D(1, 0),
+                                     Vector2D(3, 4), Vector2D(4, 1)}}
                )
         return {'matr': MatrixP((5, 5), region, neighbortable)}
 

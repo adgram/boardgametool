@@ -82,3 +82,23 @@ GameLauncherStyle = """
     }
 """
 
+MenuBarStyle = """
+    QMenu {
+        background-color: rgba(255, 255, 255, 200);  /* 子菜单背景色 */
+        border: 1px solid #CCCCCC;
+        padding: 5px;
+    }
+    QMenu::item {
+        padding: 5px 25px 5px 20px;  /* 增加左侧间距 */
+        margin: 2px;
+    }
+    QMenu::item:selected {
+        background-color: #E6F0FF;  /* 子菜单选中项背景 */
+        color: #0066CC;
+    }
+    QMenu::separator {
+        height: 1px;
+        background-color: #DDDDDD;
+        margin: 5px 0;
+    }
+"""
