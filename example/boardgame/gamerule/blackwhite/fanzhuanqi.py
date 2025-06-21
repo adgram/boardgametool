@@ -21,7 +21,7 @@ class Move_黑白棋(MoveManager):
         for pt in self.matr.search_value(value):
             for p in self.matr.get_point_value_nbrs(pt, 0):
                 if bool(self.move_test(p, value, other_val)):
-                    return self.turn_active(player = player)
+                    return self.turn_active()
         return self._step_game_over(player, GameOverEnum.Win)
 
     def win_test(self, piece):
@@ -94,7 +94,7 @@ class Move_俘虏棋(MoveManager):
         if self.matr.all_filled():
             tag = GameOverEnum.Win if piece.value + piece.num > 33 else GameOverEnum.Lose
             return self._step_game_over(player, tag)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_nil_nil(self, player, active_piece, new_pt):
         """在空点落子"""
@@ -161,12 +161,12 @@ class Move_翻田棋(MoveManager):
         pts = self.matr.search_value(value)
         for pt in pts:
             if self.matr.get_point_value_nbrs(pt, 0):
-                return self.turn_active(player = player)
+                return self.turn_active()
         for pt in pts:
             if self.matr.search_skip(pt):
-                return self.turn_active(player = player)
+                return self.turn_active()
         self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
         value = active_piece.value
@@ -226,9 +226,9 @@ class Move_耕作棋(MoveManager):
         """模拟并测试该点落子后的情况"""
         for pt in self.matr.search_value(value):
             if self.matr.get_point_value_nbrs(pt, 0):
-                return self.turn_active(player = player)
+                return self.turn_active()
         self._step_game_over(player, GameOverEnum.Win if piece.num > 5 else GameOverEnum.Lose)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
         value = active_piece.value
@@ -300,13 +300,13 @@ class Move_翻箱倒柜棋(Move_耕作棋):
         """模拟并测试该点落子后的情况"""
         if piece.num >= 10:
             self._step_game_over(player, GameOverEnum.Win)
-            self.turn_active(player = player)
+            self.turn_active()
             return
         for pt in self.matr.search_value(value):
             if self.matr.get_point_value_nbrs(pt, 0):
-                return self.turn_active(player = player)
+                return self.turn_active()
         self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
 
 class Game_翻箱倒柜棋(GameData):
@@ -360,13 +360,13 @@ class Move_翻子棋(Move_耕作棋):
         if piece.num == 9:
             for pt in self.matr.search_value(value):
                 if self.matr.get_point_value_nbrs(pt, 0):
-                    return self.turn_active(player = player)
+                    return self.turn_active()
             return  # pass, pass
         elif piece.num == 10:
             self._step_game_over(player, GameOverEnum.Win)
         elif piece.num == 0:
             self._step_game_over(player, GameOverEnum.Lose)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_test(self, ovalue, old_pt, new_pt):
         if old_pt + matrixgrid.vector_unit(new_pt - old_pt) not in self.matr.get_point_nbrs(old_pt):

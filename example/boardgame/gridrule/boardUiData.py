@@ -115,7 +115,7 @@ class PieceUi(Attribute):
 
 
 
-class DefultPiecesUi:
+class DefaultPiecesUi:
     __slots__ = ('piecedata', 'pieceui')
     def __init__(self):
         self.piecedata = {}

@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 
-class 六人跳棋Ui(DefultPiecesUi):
+class 六人跳棋Ui(DefaultPiecesUi):
     def set_data(self, data, radius = 0):
         self.piecedata = data
         # piece_map = { 1: '绿', 2: '橙', 3: '黄', 4: '红', 5: '蓝', 6: '紫'}
@@ -49,7 +49,7 @@ class Move_六人跳棋(MoveManager):
         bl = self.game.default_piece_pts[player.temporary['aim']]
         if pt in bl and len(self.matr.collection(bl).get(value, [])) == 10:
             self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
 
 
@@ -114,5 +114,5 @@ class App_六人跳棋(Application):
             'coor_show': LinePositionEnum.Null,
             'bgedges_show': AxisEnum.Null, 
             'canvas_image': Path(__file__).parent/'images/六人跳棋棋盘.png',
-            'image_dsize': (18, 20), "image_origin": (0, -5)
+            'image_dsize': (12, 0), "image_origin": (0, 0)
             }

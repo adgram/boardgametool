@@ -6,7 +6,7 @@ from .wuziqi import Move_五子棋
 
 
 
-class QuanchaUi(DefultPiecesUi):
+class QuanchaUi(DefaultPiecesUi):
     def set_data(self, data, radius = 0):
         self.piecedata = data
         self.pieceui[self.piecedata[1].value] = PieceUi(

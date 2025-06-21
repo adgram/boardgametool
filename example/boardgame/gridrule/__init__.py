@@ -5,5 +5,5 @@ from .matrixgrid import (CanvasGrid, AxisEnum, Vector2D, MatrixP,
                          NeighborTable, NullValue, Direction, MoveDest)
 from . import matrixgrid
 from .boardData import *
-from .boardUiData import DefultPiecesUi, PieceUi, PieceColor, PieceText
+from .boardUiData import DefaultPiecesUi, PieceUi, PieceColor, PieceText
 from .gameData import *

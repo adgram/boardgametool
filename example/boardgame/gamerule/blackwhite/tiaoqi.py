@@ -18,7 +18,7 @@ class Move_国象跳棋(MoveManager):
         for pt0 in pt0s:
             for pt in self.matr.search_value(value):
                 if bool(self.get_move_links(value, pt, pt0)):
-                    return self.turn_active(player = player)
+                    return self.turn_active()
         self._step_game_over(player, GameOverEnum.Win)
 
     def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
@@ -195,7 +195,7 @@ class Move_中象跳棋(Move_国象跳棋):
         bl = self.game.default_piece_pts[value]
         if len(self.matr.collection(bl).get(3 - value, [])) == count:
             self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def get_move_links(self, val, old_pt, new_pt):
         if new_pt in self.matr.get_point_nbrs(old_pt):

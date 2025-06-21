@@ -44,7 +44,7 @@ class Move_围棋19(MoveManager):
         self.move_over(player, 'add', val, pts)
         self.step_add(player, val, pts)
         self.liberties_dead(player, pts[0], 3 - val)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def step_robbery(self, player, pt):
         pass
@@ -172,8 +172,8 @@ class App_围棋吃子(App_围棋9):
 class Game_无边界围棋(Game_围棋19):
     """无边界围棋"""
     def init_gridattr(self):
-        return {'matr': MatrixP((16, 16),
-                            structure = 4, region = RegionRect((16, 16), RegionCircleEnum.XY))}
+        return {'matr': MatrixP((16, 16), structure = 4,
+                    region = RegionRect((16, 16), RegionCircleEnum.XY))}
 
 
 
@@ -242,19 +242,16 @@ class Move_二子围棋(Move_围棋19):
         self.move_over(player, 'add', val, pts)
         self.step_add(player, val, pts)
         self.liberties_dead(player, pts[0], 3 - val)
-        if player.temporary['move_num'] <= 1:
-            player.temporary['move_num'] = 2
-            self.turn_active(player = player)
-        else:
-            player.temporary['move_num'] -= 1
+        self.turn_active()
 
 
 class Player_二子围棋(PlayerBlackWhite):
-    def init_player_temporary(self):
-        return {'黑':{'move_num': 1}, '白':{'move_num': 2}}
-    
     def init_pieceattr_group(self):
         return {'placeable': True}
+
+    def init_move_turns(self):
+        self.move_turns.active_turn = 1
+        return [n for n in self.player_group.keys() for _ in range(2)]
 
 
 class Game_二子围棋(GameData):
@@ -285,11 +282,7 @@ class Move_环棋(Move_翻转围棋):
         self.move_over(player, 'add', val, pts)
         self.step_add(player, val, pts)
         self.liberties_dead(player, pts[0], 3 - val)
-        if player.temporary['move_num'] <= 1:
-            player.temporary['move_num'] = 2
-            self.turn_active(player = player)
-        else:
-            player.temporary['move_num'] -= 1
+        self.turn_active()
 
 
 
@@ -318,13 +311,13 @@ class Move_九路飞刀(Move_围棋19):
         self.step_add(player, val, pts)
         self.liberties_dead(player, pts[0], 3 - val)
         if not player.temporary['double']:
-            self.turn_active(player = player)
+            self.turn_active()
             return
         player.temporary['double'][0] -= 1
         if player.temporary['double'][0] <= 0:
             player.temporary['double'].pop(0)
         else:
-            self.turn_active(player = player)
+            self.turn_active()
 
     def _step_pass(self, player):
         """围棋的虚招，或不限手数的游戏结束本回合行棋"""
@@ -396,7 +389,7 @@ class Move_不围棋(MoveManager):
         self.step_add(player, val, pts)
         self.move_over(player, 'add', val, pts)
         self.liberties_dead(player, pts[0], 3 - val)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def liberties_dead(self, player, pt, opval):
         """判断多点是否存无气邻居"""

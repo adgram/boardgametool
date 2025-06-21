@@ -2,10 +2,10 @@
     棋盘坐标点的操作
     PieceUi
 """
-from .matrixgrid import CanvasGrid, AxisEnum, Vector2D, MatrixP, RegionBase
+from .matrixgrid import CanvasGrid, AxisEnum, Vector2D, MatrixP, RegionBase, CommonPlayer
 from . import matrixgrid
 from .until import LinePositionEnum, GameOverEnum
-from .boardUiData import (PieceUi, DefultPiecesUi, GridCoorUi, 
+from .boardUiData import (PieceUi, DefaultPiecesUi, GridCoorUi, 
                         GridEdgesUi, GridStarUi, GridTagUi)
 from .gameData import GameData
 import json
@@ -146,7 +146,7 @@ class Application:
         self.about_info = '棋类游戏。'
         self.userdict = userdict or {}
         self.gamerule:GameData = gamerule or self.init_rule()
-        self.pieceuis:DefultPiecesUi = pieceuis or self.init_pieceuis()
+        self.pieceuis:DefaultPiecesUi = pieceuis or self.init_pieceuis()
         self.canvasboard = canvasboard or self.get_canvas()
         x_cell = self.canvasboard.canvas_grid.x_cell
         self.pieceuis.set_data(self.gamerule.pieces, 
@@ -263,7 +263,7 @@ class Application:
 
     @property
     def player_names(self):
-        return [name for name in self.gamerule.players.keys() if name != '_common_']
+        return [name for name in self.gamerule.players.keys() if name != CommonPlayer]
     
     def gameover_tag_name(self, tag):
         match tag:

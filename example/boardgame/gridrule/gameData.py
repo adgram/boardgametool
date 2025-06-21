@@ -1,5 +1,5 @@
 
-from .matrixgrid import MatrixP, Vector2D
+from .matrixgrid import MatrixP, Vector2D, NullValue, MoveTurns, AutoPlayer, CommonPlayer
 from .until import (GenericSignal, ClockStrSignals,
                     MoveRuleEnum, GameOverEnum, PieceTagEnum,
                     History, MoveIndexNode, ClockManager)
@@ -293,7 +293,7 @@ class MoveManager:
         # 询问是否同意
         self.call_signal('ask_retract', self.game.active_player_name)
         for name in self.game.players.keys():
-            if name != self.game.active_player_name and name != '_common_':
+            if name != self.game.active_player_name and name != CommonPlayer:
                 self.call_signal('be_asked_retract', name)
 
     def agree_retract(self, askname):
@@ -305,7 +305,7 @@ class MoveManager:
             for move, data in node_data:
                 self.reverse_func[move](self.game.players[player], *data)
         self.player_manager.set_active(name = askname)
-        self.turn_active(reverse = True, player = self.game.players[askname])
+        self.turn_active(name = askname, reverse = True)
 
     def pass_move(self):
         """围棋的虚招，或不限手数的游戏结束本回合行棋"""
@@ -393,9 +393,9 @@ class MoveManager:
                 n_piece.add(pts)
                 self.call_piece_signal('add', n_piece.value, pts)
 
-    def add_pts_piece(self, player, pts, val = None):
+    def add_pts_piece(self, player, pts, val = NullValue):
         """绘制棋盘上的棋子"""
-        if val is None:
+        if val == NullValue or val is None:
             val = player.active
         if val == 0:
             self.remove_pts_piece(pts)
@@ -465,8 +465,8 @@ class MoveManager:
             return
         for move, data in reversed(node_data):
             self.reverse_func[move](self.game.players[node.player], *data)
-        self.player_manager.set_active(name = prevname or self.player_manager.turns[-1])
-        self.turn_active(player = self.game.active_player)
+        self.player_manager.set_active(name = prevname)
+        self.turn_active()
         for p,t1,t2 in symbol:
             self.symbol_signals.call('update_symbol', p, t2)
     
@@ -549,10 +549,10 @@ class MoveManager:
         """移子击杀；选中棋子"""
         self.update_tag_pts(player, [], PieceTagEnum.Add)
 
-    def turn_active(self, reverse = False, player = None):
+    def turn_active(self, name = AutoPlayer, reverse = False):
         self.call_signal('clear_symbol', 0, 0)
         self.symbols_tag = {'1': [], 'A': []}
-        return self.game.player_manager.turn_active(reverse = reverse, player = player)
+        return self.game.player_manager.turn_active(name = name, reverse = reverse)
 
     def _step_pass(self, player):
         """围棋的虚招，或不限手数的游戏结束本回合行棋"""
@@ -564,11 +564,11 @@ class MoveManager:
 
     def step_pass(self, player):
         """围棋的虚招，或不限手数的游戏结束本回合行棋"""
-        self.turn_active(player = player)
+        self.turn_active()
 
     def reverse_pass(self, player):
         """围棋的虚招，或不限手数的游戏结束本回合行棋"""
-        self.turn_active(player = player, reverse = True)
+        self.turn_active(reverse = True)
 
     def _step_add(self, player, val, pts):
         """绘制棋盘上的棋子"""
@@ -659,7 +659,7 @@ class MoveManager:
 
 class PlayerManager:
     __slots__ = ('game', 'players', 'pieces',
-                  'turns', 'active', 'in_turns',
+                'move_turns', 'in_turns',
                  'player_signals', 'player_int_signals', 
                  'player_2_signals', 'player_piece_2_signals',
                  'pieceattr_group', 'player_group',
@@ -671,10 +671,8 @@ class PlayerManager:
         # 值：对象
         self.pieces: dict[int, PieceData] = {}
         # 轮流落子模式的棋手顺序，为棋手名称序列
-        self.turns = []
+        self.move_turns = MoveTurns()
         self.in_turns = True
-        # 当前活动的棋手，在turns中的序号
-        self.active = 0
         self.player_signals = PlayerSignals()
         self.player_int_signals = PlayerIntSignals()
         self.player_2_signals = Player2Signals()
@@ -693,13 +691,14 @@ class PlayerManager:
         self.piece_count.update(self.init_piece_count())
         self.add_players(**self.player_group)
         self.add_common_player()
+        self.set_turns([p for p in self.init_move_turns() if p != CommonPlayer])
         for player in self.player_group.values():
             player.temporary.update(self.player_temporary.get(player.name, {}))
             for piece in player.pieces.values():
                 piece.count = self.piece_count.get(piece.value, piece.count)
 
     def rebegin(self):
-        self.active = 0
+        self.move_turns.active_turn = 0
         self.in_turns = True
         self.player_temporary.update(self.init_player_temporary())
         self.piece_count.update(self.init_piece_count())
@@ -721,6 +720,12 @@ class PlayerManager:
     def init_common_pieces(self):
         return {}
     
+    def init_move_turns(self):
+        return self.player_group.keys()
+    
+    def set_turns(self, turns):
+        self.move_turns.set_turns(turns)
+    
     @property
     def grid(self):
         return self.game.grid
@@ -732,12 +737,11 @@ class PlayerManager:
 
     def set_active(self, val = None, name = None, player = None):
         """设置当前棋手"""
-        if not name and not player and not val:
-            return
+        if not (val or name or player): return
         name = self.get_player(val = val, name = name, player = player).name
-        if self.active_player.name == name:
+        if self.active_player_name == name:
             return
-        self.active = self.turns.index(name)
+        self.move_turns.set_active_player(name)
         active_player = self.active_player
         for p in self.players.values():
             if p != active_player:
@@ -753,7 +757,7 @@ class PlayerManager:
     @property
     def common_player(self):
         """获取棋手对象"""
-        return self.players.get('_common_', None)
+        return self.players.get(CommonPlayer, None)
 
     def get_piece(self, pt = None, val = None, piece = None) -> PieceData:
         """获取棋子"""
@@ -762,18 +766,16 @@ class PlayerManager:
     @property
     def active_player(self):
         """获取当前棋手"""
-        return self.players[self.turns[self.active]]
+        return self.players[self.move_turns.active_player()]
     
     @property
     def active_player_name(self):
-        return self.active_player.name
+        return self.move_turns.active_player()
     
     def add_player(self, name = None, player = None):
         """加入棋手"""
         if not name:
             name = player.name
-        if name not in self.players:
-            self.turns.append(name)
         self.players[name] = player
         self.pieces.update(player.pieces)
         self.call_signal('add_player', name)
@@ -781,10 +783,10 @@ class PlayerManager:
     def add_common_player(self):
         """加入棋手"""
         common_pieces = self.init_common_pieces()
-        common_player = self.player_define(name = '_common_', pieces = common_pieces)
+        common_player = self.player_define(name = CommonPlayer, pieces = common_pieces)
         common_player.pieces.update(common_pieces)
         self.pieces.update(common_pieces)
-        self.players['_common_'] = common_player
+        self.players[CommonPlayer] = common_player
     
     def add_players(self, **players):
         for name, player in players.items():
@@ -792,7 +794,7 @@ class PlayerManager:
 
     def remove_player(self, name = None):
         """移除棋手，并给移除其在轮换规则中的位置"""
-        self.turns = [v for v in self.turns if v != name]
+        self.move_turns.remove_player(name)
         for val in self.players[name].pieces:
             self.pieces.pop(val)
         self.players.pop(name)
@@ -835,25 +837,18 @@ class PlayerManager:
         """轮换执棋"""
         self.in_turns = True
 
-    def get_turn_player(self, reverse = False, player = None):
+    def turn_player(self, name = AutoPlayer, reverse = False):
         """棋手轮换规则"""
-        active = self.turns.index(player.name) if player else self.active
-        if reverse:
-            return active-1 if active>0 else len(self.turns)-1
-        return active+1 if active<len(self.turns)-1 else 0
-
-    def turn_player(self, reverse = False, player = None):
-        """棋手轮换规则"""
-        self.active = self.get_turn_player(reverse = reverse, player = player)
+        self.move_turns.make_player_turn(name, reverse)
         self.call_signal('active_player', self.active_player_name)
-        self.call_signal('info_piece', self.active_player.name,
+        self.call_signal('info_piece', self.active_player_name,
                     self.active_player.pieces.keys().__iter__().__next__())
 
-    def turn_active(self, reverse = False, player = None):
+    def turn_active(self, name = AutoPlayer, reverse = False):
         """棋手轮换规则"""
         if self.game.in_race and not self.in_turns:
             return
-        self.turn_player(reverse = reverse, player = player)
+        self.turn_player(name = name, reverse = reverse)
 
     def player_define(self, **kwargs):
         """默认玩家"""
@@ -941,7 +936,7 @@ class GameData:
 
     def after_begin(self):
         self.call_signal('active_player', self.active_player_name)
-        self.call_signal('info_piece', self.active_player.name,
+        self.call_signal('info_piece', self.active_player_name,
                     self.active_player.pieces.keys().__iter__().__next__())
     
     def _get_game_data(self, current = True):
@@ -992,9 +987,9 @@ class GameData:
             self.grid.clock.over_clock()
         self.set_borad()
 
-    def turn_active(self, reverse = False, player = None):
+    def turn_active(self, name = AutoPlayer, reverse = False):
         """棋手轮换规则"""
-        return self.player_manager.turn_active(reverse = reverse, player = player)
+        return self.player_manager.turn_active(name = name, reverse = reverse)
 
     def move_point(self, pt = None, name = None):
         """点击棋盘 点击组合：己方、对方、空白"""
@@ -1033,7 +1028,7 @@ class GameData:
     def add_default_piece_pts(self):
         """设置默认棋子"""
         for val, pts in self.matr.collection().items():
-            if val in [0, None]:
+            if val in [0, NullValue]:
                 continue
             self.move_manager.add_pts_piece(None, pts, val)
     

@@ -15,7 +15,7 @@ class Move_两吏拿一差(MoveManager):
             self._step_game_over(player, GameOverEnum.Lose)
         if self.player_manager.pieces[3-value].num == 0:
             self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
         value = active_piece.value
@@ -361,7 +361,7 @@ class Move_出奇制胜棋(Move_蒸架棋之三步吃子法):
         if len(pts := self.matr.search_value(3 - value)) == 1 and \
                 pts[0] == (0, 1) and self.matr.get_point_value_nbrs(pts[0], value) == []:
             self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
     
     def kill_test(self, player, old_pt, new_pt):
         if new_pt in self.matr.get_point_nbrs(old_pt):

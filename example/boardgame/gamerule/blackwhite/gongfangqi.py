@@ -12,7 +12,7 @@ class Move_攻防棋(MoveManager):
     def test_win(self, player, pt):
         if pt.y == 8 if player.name == '黑' else 0:
             self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
         """在空点落子"""

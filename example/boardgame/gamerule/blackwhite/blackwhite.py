@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 
-class BlackWhiteUi(DefultPiecesUi):
+class BlackWhiteUi(DefaultPiecesUi):
     def set_data(self, data, radius = 0):
         self.piecedata = data
         self.pieceui[self.piecedata[1].value] = PieceUi(

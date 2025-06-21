@@ -19,7 +19,7 @@ class Move_憋死牛(MoveManager):
         """模拟并测试该点落子后的情况"""
         for pt in self.matr.search_value(value):
             if bool(self.matr.get_point_value_nbrs(pt, 0)):
-                return self.turn_active(player = player)
+                return self.turn_active()
         self._step_game_over(player, GameOverEnum.Win)
 
     def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
@@ -174,7 +174,7 @@ class Move_四和棋(Move_憋死牛):
     def test_win(self, player, value):
         """模拟并测试该点落子后的情况"""
         if self.game.pieces[value].num != 4:
-            return self.turn_active(player = player)
+            return self.turn_active()
         super().test_win(player, value)
 
     def move_nil_nil(self, player, active_piece, new_pt):

@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 
-class 象棋Ui(DefultPiecesUi):
+class 象棋Ui(DefaultPiecesUi):
     def set_data(self, data, radius = 0):
         self.piecedata = data
         piece_map1 = {1: '車', 2: '馬', 3: '炮', 
@@ -48,7 +48,7 @@ class Move_象棋(MoveManager):
                 return self._step_game_over(player, GameOverEnum.Win)
             case ('黑', 6):
                 return self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def test_win2(self, player: 'PlayerData', pt):
         """模拟并测试该点落子后的情况"""
@@ -57,7 +57,7 @@ class Move_象棋(MoveManager):
                 for npt in self.matr.search_value(16):
                     if self.matr.search_to_face(opt, npt, structure = 4):
                         return self._step_game_over(player, GameOverEnum.Lose)
-        self.turn_active(player = player)
+        self.turn_active()
     
     def _move_test(self, value, old_pt, new_pt):
         if not self.matr.pt_in_value_dest(value, old_pt, new_pt):

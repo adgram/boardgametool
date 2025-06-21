@@ -4,6 +4,9 @@ from enum import Enum
 
 
 NullValue = -128
+CommonPlayer = "_CommonPlayer_"
+AutoPlayer = "_AutoPlayer_"
+
 
 
 class Vector2D:
@@ -246,6 +249,10 @@ def as_point(pt):
     ...
 
 def as_vector(pt):
+    """尝试转换为Vector"""
+    ...
+
+def as_vectorset(pts):
     """尝试转换为Vector"""
     ...
 
@@ -1165,7 +1172,7 @@ class MoveHistory:
     def __init__(self):
         self.head = MoveIndexNode()  # 默认头节点
         self.current:MoveIndexNode = self.head
-        self.branches = []
+        # self.branches = []
 
     def move(self, player, index):
         """执行节点"""
@@ -1254,51 +1261,85 @@ class MoveHistory:
     def simplify_history(self) -> 'MoveHistory':
         '''根据当前节点提取简化的历史记录'''
         ...
+    
+    def get_current_path_length_from_branch(self) -> int:
+        ...
 
 
-
-class PlayerClock:
-    __slots__ = ('time_num')
-    def __init__(self, player:str, time_num: int, signals):
-        self.time_num = time_num
-
-    def start(self):
-        """开始计时"""
+class MoveTurns:
+    __slots__ = ('turns', 'active_turn')
+    def __init__(self, turns: list[str], active_turn = 0) -> None:
+        self.turns = turns
+        self.active_turn = active_turn
+    
+    def active_player(self):
         ...
     
-    def stop(self):
-        """结束计时"""
+    def set_turns(self, turns: list[str]) -> None:
+        ...
+
+    def make_turn(self, turn = -1, reverse = False):
+        ...
+
+    def player_index(self, player, reverse = False):
         ...
     
-    def change(self):
-        """暂停计时"""
+    def make_player_turn(self, player = AutoPlayer, reverse = False):
+        ...
+
+    def turned_player(self, player = AutoPlayer, reverse = False):
+        ...
+
+    def set_active_player(self, player = CommonPlayer):
+        ...
+
+    def remove_player(self, player):
         ...
 
 
-class ClockManager:
-    """计时器"""
-    __slots__ = ('game_time', 'signals')
-    def __init__(self, signals):
-        ...
 
-    def set_clock(self, player:str, time_num: int):
-        """设置倒计时"""
-        ...
+# class PlayerClock:
+#     __slots__ = ('time_num')
+#     def __init__(self, player:str, time_num: int, signals):
+#         self.time_num = time_num
 
-    def start_clock(self, player:str = ''):
-        """开始倒计时"""
-        ...
+#     def start(self):
+#         """开始计时"""
+#         ...
+    
+#     def stop(self):
+#         """结束计时"""
+#         ...
+    
+#     def change(self):
+#         """暂停计时"""
+#         ...
 
-    def change_clock(self, player:str = ''):
-        """暂停或继续倒计时"""
-        ...
 
-    def over_clock(self, player:str = ''):
-        """结束倒计时"""
-        ...
+# class ClockManager:
+    # """计时器"""
+    # __slots__ = ('game_time', 'signals')
+    # def __init__(self, signals):
+    #     ...
 
-    def get_time(self, player:str):
-        ...
+    # def set_clock(self, player:str, time_num: int):
+    #     """设置倒计时"""
+    #     ...
 
-    def set_time(self, player:str, time_num: int):
-        ...
+    # def start_clock(self, player:str = ''):
+    #     """开始倒计时"""
+    #     ...
+
+    # def change_clock(self, player:str = ''):
+    #     """暂停或继续倒计时"""
+    #     ...
+
+    # def over_clock(self, player:str = ''):
+    #     """结束倒计时"""
+    #     ...
+
+    # def get_time(self, player:str):
+    #     ...
+
+    # def set_time(self, player:str, time_num: int):
+    #     ...

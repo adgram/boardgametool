@@ -13,13 +13,13 @@ class Move_连方棋(MoveManager):
     def test_win(self, player, value):
         """模拟并测试该点落子后的情况"""
         if self.game.pieces[value].num != 4:
-            return self.turn_active(player = player)
+            return self.turn_active()
         pts = self.matr.search_value(value)
         if len(set([pt.x for pt in pts])) == 1 or\
                 len(set([pt.y for pt in pts])) == 1:
             self.update_tag_pts(player, pts, PieceTagEnum.Win)
             self._step_game_over(player, GameOverEnum.Win)
-            self.turn_active(player = player)
+            self.turn_active()
             return
         # 正方形必然为四短两长
         def distance(p1, p2):
@@ -30,7 +30,7 @@ class Move_连方棋(MoveManager):
         if len(set(lens)) == 2:
             self.update_tag_pts(player, pts, PieceTagEnum.Win)
             self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
         value = active_piece.value
@@ -108,7 +108,7 @@ class Move_直角五子棋(MoveManager):
         if bls:
             self.update_tag_pts(player, bls, PieceTagEnum.Win)
             self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_nil_nil(self, player: 'PlayerData', active_piece, new_pt):
         """在空点落子"""

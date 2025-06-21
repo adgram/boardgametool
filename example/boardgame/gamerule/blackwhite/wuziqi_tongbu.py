@@ -6,7 +6,7 @@ from .wuziqi import Move_五子棋, App_五子棋
 
 
 
-class ThreesUi(DefultPiecesUi):
+class ThreesUi(DefaultPiecesUi):
     def set_data(self, data, radius = 0):
         self.piecedata = data
         self.pieceui[self.piecedata[1].value] = PieceUi(
@@ -84,7 +84,7 @@ class Move_同步五子棋(Move_五子棋):
                 self.step_add(pl1, val1, [pt1])
                 self.step_add(player, active_piece.value, [new_pt])
                 self.test_win(pl1, pt1, player, new_pt)
-        self.turn_active(player = player)
+        self.turn_active()
 
 
 

@@ -203,7 +203,10 @@ class History:
     def forward(self)-> tuple[str, MoveIndexNode, dict]:
         """跳到下一步。返回下一步玩家和下一步的数据"""
         player, node = self.move_history.forward()
-        return player, node, self.get(node.index), self.get_symbol(node.index)
+        if node:
+            return player, node, self.get(node.index), self.get_symbol(node.index)
+        else:
+            return player, node, [], []
 
     def jump_to_path(self, path):
         """跳转到指定路径
@@ -292,12 +295,10 @@ class History:
 
     def simplify_history(self) -> 'MoveHistory':
         return self.move_history.simplify_history()
-
+    
     def get_current_path_length_from_branch(self):
-        node = self.move_history.current
-        if node.index == -1:
-            return 0
-        return self.move_history.get_path_from_branch(node)[1]
+        return self.move_history.get_current_path_length_from_branch()
+
 
 
 ClockStrSignals = GenericSignal[str, str]

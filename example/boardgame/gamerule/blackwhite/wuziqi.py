@@ -19,7 +19,7 @@ class Move_五子棋(MoveManager):
         if bool(rows := matrixgrid.flatten_as_vector(self.in_row(pt))):
             self.update_tag_pts(player, rows, PieceTagEnum.Win)
             self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_nil_nil(self, player: 'PlayerData', active_piece, new_pt):
         """在空点落子"""
@@ -65,21 +65,17 @@ class Move_六连棋(Move_五子棋):
         if bool(rows := matrixgrid.flatten_as_vector(orows)):
             self.update_tag_pts(player, rows, PieceTagEnum.Win)
             self._step_game_over(player, GameOverEnum.Win)
-        if player.temporary['move_num'] <= 1:
-            player.temporary['move_num'] = 2
-            self.turn_active(player = player)
-        else:
-            player.temporary['move_num'] -= 1
+        self.turn_active()
 
 
 
 class Player_六连棋(PlayerBlackWhite):
-    def init_player_temporary(self):
-        return {'黑':{'move_num': 1}, '白':{'move_num': 2}}
-    
     def init_pieceattr_group(self):
         return {'placeable': True}
 
+    def init_move_turns(self):
+        self.move_turns.active_turn = 1
+        return [n for n in self.player_group.keys() for _ in range(2)]
 
 
 
@@ -117,7 +113,7 @@ class Move_反五子棋(Move_五子棋):
         if bool(rows := matrixgrid.flatten_as_vector(orows)) and not self.grid.over:
             self.update_tag_pts(player, rows, PieceTagEnum.Lose)
             self._step_game_over(player, GameOverEnum.Lose)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def test_win2(self, player, new_pt, old_pt, val):
         """判断是否存在连子"""
@@ -236,7 +232,7 @@ class Move_斜胜棋(MoveManager):
         self.update_tag_pts(player, pts, PieceTagEnum.Win)
         self._step_game_over(player, GameOverEnum.Win)
         if pts:
-            self.turn_active(player = player)
+            self.turn_active()
 
     def test_win(self, player, piece, pt):
         """模拟并测试该点落子后的情况"""
@@ -256,7 +252,7 @@ class Move_斜胜棋(MoveManager):
                 for p in pts:
                     if p[0] in [0, 4] and p[1] in [0, 4]:
                         return self._game_win(player, pts)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
         if old_pt not in self.matr.get_point_nbrs(new_pt):
@@ -381,7 +377,7 @@ class Move_三六九棋(Move_五子棋):
             other = self.player_manager.get_player(name = '白')
             if player.score >= other.score:
                 self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
 
 
@@ -449,7 +445,7 @@ class Move_旋转五子棋(MoveManager):
         elif bool(rows := result[3 - player.active]):
             self.update_tag_pts(player, rows, PieceTagEnum.Lose)
             self._step_game_over(player, GameOverEnum.Lose)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_button(self, player, pt):
         """移子击杀；选中棋子"""
@@ -565,7 +561,7 @@ class Move_九宫棋(MoveManager):
         if bool(rows := matrixgrid.flatten_as_vector(self.matr.search_in_row(pt, 3))):
             self.update_tag_pts(player, rows, PieceTagEnum.Win)
             self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active(player = player)
+        self.turn_active()
 
     def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
         value = active_piece.value
@@ -618,32 +614,31 @@ class Move_双线五子棋(Move_五子棋):
     def test_win(self, player, pt):
         """判断是否存在连子"""
         opt = player.temporary['pt']
-        if player.temporary['pt'] and (pt.is_diagonal(opt) or \
-                                       pt.is_lattice(opt)):
+        if opt:
+            player.temporary['pt'] = None
+        else:
+            player.temporary['pt'] = pt
+        if opt and (pt.is_diagonal(opt) or pt.is_lattice(opt)):
             self.update_tag_pts(player, [pt, opt], PieceTagEnum.Lose)
             self._step_game_over(player, GameOverEnum.Lose)
         orows = self.in_row(pt, n = 5)
         if bool(rows := matrixgrid.flatten_as_vector(orows)):
             self.update_tag_pts(player, rows, PieceTagEnum.Win)
             self._step_game_over(player, GameOverEnum.Win)
-        if player.temporary['move_num'] <= 1:
-            player.temporary['move_num'] = 2
-            player.temporary['pt'] = None
-            self.turn_active(player = player)
-        else:
-            player.temporary['move_num'] -= 1
-            player.temporary['pt'] = pt
-
-
+        self.turn_active()
 
 
 
 class Player_双线五子棋(PlayerBlackWhite):
     def init_player_temporary(self):
-        return {'黑':{'move_num': 1, 'pt': None}, '白':{'move_num': 2, 'pt': None}}
+        return {'黑':{'pt': None}, '白':{'pt': None}}
     
     def init_pieceattr_group(self):
         return {'placeable': True}
+
+    def init_move_turns(self):
+        self.move_turns.active_turn = 1
+        return [n for n in self.player_group.keys() for _ in range(2)]
 
 
 
@@ -704,7 +699,7 @@ class Move_引力四子棋(Move_重力四子棋):
             self.step_moves(vect)
             self.test_win2(player)
         self.grid.temporary['vect'] = vect
-        self.turn_active(player = player)
+        self.turn_active()
 
     def test_win2(self, player):
         """判断是否存在连子"""
