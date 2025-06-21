@@ -384,19 +384,22 @@ class AppCanvas(QGraphicsView):
         self.app.set_signal('remove_symbol', self.remove_symbol)
         self.app.set_signal('clear_symbol', self.clear_symbol)
 
-    def add_pieces(self, value, pts):
-        pieceui = self.app.pieceuis.get(value).copy()
-        for pt in pts:
-            if self.app.show_piece_index:
-                pieceui.index_text = str(self.app.get_piece_index(pt))
-                if pieceui.index_text in ['1', '0']:
-                    self.clear_index_text()
-            new_piece = PieceItem(pieceui = pieceui)
-            new_piece.setZValue(LAYER_PIECES)
-            dot = self.app.get_dot(pt = pt)
-            new_piece.setPos(*dot)
-            self.scene.addItem(new_piece)
-            self.pt_pieces[pt] = new_piece
+    def add_pieces(self, pts_map):
+        tag = True
+        for value, pts in pts_map.items():
+            pieceui = self.app.pieceuis.get(value).copy()
+            for pt in pts:
+                if self.app.show_piece_index:
+                    pieceui.index_text = str(self.app.get_piece_index(pt))
+                    if tag and pieceui.index_text in ['1', '0']:
+                        self.clear_index_text()
+                        tag = False
+                new_piece = PieceItem(pieceui = pieceui)
+                new_piece.setZValue(LAYER_PIECES)
+                dot = self.app.get_dot(pt = pt)
+                new_piece.setPos(*dot)
+                self.scene.addItem(new_piece)
+                self.pt_pieces[pt] = new_piece
 
     def remove_pieces(self, pts):
         """清除棋盘上的棋子"""
@@ -416,9 +419,9 @@ class AppCanvas(QGraphicsView):
             self.scene.removeItem(piece)
         self.pt_pieces.clear()
 
-    def change_pieces(self, value, pts):
-        self.remove_pieces(pts)
-        self.add_pieces(value, pts)
+    def change_pieces(self, pts_map):
+        self.remove_pieces(sum(pts_map.values(), []))
+        self.add_pieces(pts_map)
     
     def swap_pieces(self, pts_links):
         for pt1, pt2 in pts_links:
@@ -904,8 +907,6 @@ class GameLauncher(QDialog):
             if launcher.exec() == QDialog.Accepted:
                 # 获取选择的游戏名称
                 game_name = launcher.start_game()
-                # launcher.deleteLater()
-                # QApplication.processEvents()
                 # 启动游戏主窗口
                 mainWin = BoardGameApp(APPS[game_name]())
                 mainWin.show()

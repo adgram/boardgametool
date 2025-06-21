@@ -353,6 +353,19 @@ class MoveManager:
                 self.game.get_piece(val = val2).num -= 1
         self.remove_pts_piece(remove_pts)
 
+    def add_pts_map_piece(self, pts_map):
+        temp = {}
+        for val, pts in pts_map.items():
+            if val in [0, None]:
+                self.remove_pts_piece(pts)
+                return
+            piece = self.game.get_piece(val = val)
+            temp.setdefault(piece, []).extend(pts)
+            for pt in pts:
+                self.grid.set_value(pt, val, True)
+            piece.add(pts)
+        self.call_piece_signal('add', pts_map)
+
     def remove_pts_piece(self, pts):
         """清除棋盘上的棋子"""
         temp = {}
@@ -388,10 +401,10 @@ class MoveManager:
             if piece:
                 piece.remove(pts)
                 n_piece.add(pts)
-                self.call_piece_signal('change', n_piece.value, pts)
+                self.call_piece_signal('change', {n_piece.value: pts})
             else:
                 n_piece.add(pts)
-                self.call_piece_signal('add', n_piece.value, pts)
+                self.call_piece_signal('add', {n_piece.value: pts})
 
     def add_pts_piece(self, player, pts, val = NullValue):
         """绘制棋盘上的棋子"""
@@ -403,7 +416,7 @@ class MoveManager:
         for pt in pts:
             self.grid.set_value(pt, val, True)
         self.player_manager.pieces[val].add(pts)
-        self.call_piece_signal('add', val, pts)
+        self.call_piece_signal('add', {val: pts})
 
     def add_tag_pts(self, player, pts, tag:PieceTagEnum):
         """标记棋子"""
@@ -465,15 +478,16 @@ class MoveManager:
             return
         for move, data in reversed(node_data):
             self.reverse_func[move](self.game.players[node.player], *data)
-        self.player_manager.set_active(name = prevname)
-        self.turn_active()
+        if prevname != CommonPlayer:
+            self.player_manager.set_active(name = prevname)
+            self.turn_active()
         for p,t1,t2 in symbol:
             self.symbol_signals.call('update_symbol', p, t2)
     
     def step_forward(self)-> tuple[str, MoveIndexNode]:
         """跳到下一步。返回下一步玩家和下一步的数据"""
         name, node, node_data, symbol = self.grid.history.forward()
-        if not node_data and not symbol:
+        if not node_data:
             return
         self.call_signal('clear_symbol', 0, 0)
         if name:

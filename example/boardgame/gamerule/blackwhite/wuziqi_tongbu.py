@@ -1,7 +1,6 @@
 
 from .blackwhite import PlayerBlackWhite
 from ...gridrule import *
-from pathlib import Path
 from .wuziqi import Move_五子棋, App_五子棋
 
 
@@ -27,7 +26,7 @@ class ThreesUi(DefaultPiecesUi):
                                  color = (0, 0, 0, 200)),
                 radius = radius
                )
-        self.pieceui[self.piecedata[-1].value] = PieceUi(
+        self.pieceui[self.piecedata[3].value] = PieceUi(
                 color = PieceColor(color = (0, 0, 0, 200),
                                    fill = (125, 125, 125, 200),
                                    gradient = (105, 105, 105, 170)),
@@ -43,8 +42,17 @@ class Player_同步五子棋(PlayerBlackWhite):
     def init_pieceattr_group(self):
         return {'placeable': True}
 
-    def init_common_pieces(self):
-        return {-1: self.piece_define(**{'value': -1, 'name':'灰', **{**self.pieceattr_group}})}
+    def init_player_group(self):
+        return {'黑':self.player_black(), '白':self.player_white(), '灰': self.player_same()}
+
+    def player_same(self, **kwargs):
+        """黑棋玩家"""
+        player = self.player_define(**{'name': '灰', **kwargs})
+        player.pieces = {3: self.piece_define(player = player, value = 3, name = '灰')}
+        return player
+    
+    def same_player(self):
+        return self.players['灰']
 
 
 
@@ -61,30 +69,45 @@ class Move_同步五子棋(Move_五子棋):
             self.update_tag_pts(pl2, row2, PieceTagEnum.Win)
             self._step_game_over(pl2, GameOverEnum.Win)
         elif len(row1) > 0:
-            common = self.player_manager.common_player
-            self.step_change(common, pl1.active, -1, row1)
-            self.step_change(common, pl2.active, -1, row2)
-            self.move_over(common, 'change', pl1.active, -1, row1)
-            self.add_move(common, 'change', pl1.active, -1, row2)
+            same = self.player_manager.same_player()
+            self.step_change(same, pl1.active, 3, row1)
+            self.step_change(same, pl2.active, 3, row2)
+            self.move_over(same, 'change', pl1.active, 3, row1)
+            self.add_move(same, 'change', pl1.active, 3, row2)
 
     def move_nil_nil(self, player: 'PlayerData', active_piece, new_pt):
         """在空点落子"""
+        same = self.player_manager.same_player()
         if self.grid.temporary.get('pt', None) is None:
             self.grid.temporary['pt'] = new_pt
         else:
             pt1 = self.grid.temporary['pt']
             self.grid.temporary['pt'] = None
             if pt1 == new_pt:
-                self._step_add(self.player_manager.common_player, -1, [new_pt])
+                self._step_add(same, {3: [new_pt]})
             else:
                 val1 = 3 - active_piece.value
                 pl1 = self.player_manager.get_player(val = val1)
-                self.move_over(pl1, 'add', val1, [pt1])
-                self.move_over(player, 'add', active_piece.value, [new_pt])
-                self.step_add(pl1, val1, [pt1])
-                self.step_add(player, active_piece.value, [new_pt])
+                self._step_add(same, {val1: [pt1], active_piece.value: [new_pt]})
                 self.test_win(pl1, pt1, player, new_pt)
         self.turn_active()
+        if self.player_manager.active_player == same:
+            self.turn_active()
+
+    def _step_add(self, player, pts_map):
+        """绘制棋盘上的棋子"""
+        self.move_over(player, 'add', pts_map)
+        self.step_add(player, pts_map)
+
+    def step_add(self, player, pts_map):
+        """绘制棋盘上的棋子"""
+        self.add_pts_map_piece(pts_map)
+        self.update_tag_pts(player, sum(pts_map.values(), []), PieceTagEnum.Add)
+
+    def reverse_add(self, player, pts_map):
+        """绘制棋盘上的棋子"""
+        self.update_tag_pts(player, [], PieceTagEnum.Add)
+        self.remove_pts_piece(sum(pts_map.values(), []))
 
 
 

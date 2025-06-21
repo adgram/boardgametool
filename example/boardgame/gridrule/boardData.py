@@ -244,7 +244,7 @@ class Application:
         pieceui = self.pieceuis.get(value)
         return self.put_piece(pieceui, pt)
 
-    def add_pieces(self, value, pts):
+    def add_pieces(self, pts_map):
         """绘制棋子"""
         return
 
@@ -252,7 +252,7 @@ class Application:
         """清除棋盘上的棋子"""
         pass
     
-    def change_pieces(self, value, pts):
+    def change_pieces(self, pts_map):
         pass
     
     def swap_pieces(self, pts_linkss):
