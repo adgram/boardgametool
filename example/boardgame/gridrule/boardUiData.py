@@ -37,6 +37,16 @@ class GridEdgesUi(Attribute):
         self.show = kwargs.get('show', AxisEnum.Null)
 
 
+class GridLinesUi(Attribute):
+    """网格线框"""
+    __slots__ = ('color', 'thickness', 'fill')
+    def __init__(self, **kwargs):
+        self.color = kwargs.get('color', (255, 255, 255, 0))        # 线颜色
+        self.thickness = kwargs.get('thickness', 0)                 # 线宽
+        self.fill = kwargs.get('fill', self.color)
+
+
+
 class GridStarUi(Attribute):
     """网格星位"""
     __slots__ = ('color', 'radius', 'show')
