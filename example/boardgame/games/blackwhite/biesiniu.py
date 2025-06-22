@@ -262,8 +262,8 @@ class Game_两三步困阻棋(GameData):
                                   2: [(0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (0, 3), (4, 3)]}
         region = RegionRect((5, 5))
         neighbortable = NeighborTable.structure_only({region: 4, RegionPoints(((2, 1), (1, 2), (3, 2), (2, 3))): 8})
-        neighbortable.add_mathvector_map({RegionPoints(((0, 1), (1, 0), (3, 4), (4, 3))): [(1, 1), (-1, -1)],
-                                         RegionPoints(((0, 3), (3, 0), (1, 4), (4, 1))): [(-1, 1), (1, -1)]})
+        neighbortable.add_mathvector_map({RegionPoints(((0, 1), (1, 0), (3, 4), (4, 3))): {(1, 1), (-1, -1)},
+                                         RegionPoints(((0, 3), (3, 0), (1, 4), (4, 1))): {(-1, 1), (1, -1)}})
         return {'matr': MatrixP((5, 5), region, neighbortable)}
 
     def init_move_manager(self):
@@ -508,7 +508,7 @@ class App_八角棋(AppBlackWhite):
         return Game_八角棋()
     
     def grid_attr(self):
-        return {'size': (5, 5), '0canvas_size': (750, 750),
+        return {'size': (5, 5), 'canvas_size': (750, 750),
                 'padding': (100, 80), 'is_net': True}
     
     def canvas_attr(self):

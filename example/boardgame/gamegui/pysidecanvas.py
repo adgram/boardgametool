@@ -57,19 +57,9 @@ class AppCanvas(QGraphicsView):
         painter.setBrush(QColor(*ui.fill))
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         painter.setPen(pen)
-        points = [
-            QPointF(*pt1), QPointF(*pt2),
-            QPointF(*pt3), QPointF(*pt4)
-        ]
+        points = [QPointF(*pt1), QPointF(*pt2),
+            QPointF(*pt3), QPointF(*pt4)]
         painter.drawPolygon(points)
-
-    @classmethod
-    def draw_circle(cls, painter: QPainter, pt, ui):
-        pen = QPen(QColor(*ui.color), ui.thickness)
-        painter.setPen(pen)
-        painter.setBrush(QColor(*ui.fill))
-        painter.drawEllipse(pt[0] - ui.radius, pt[1] - ui.radius,
-                           ui.radius*2, ui.radius*2)
 
     @classmethod
     def draw_dot(cls, painter: QPainter, pt, ui):
@@ -124,17 +114,33 @@ class AppCanvas(QGraphicsView):
 
     def drawBackground(self, painter: QPainter, rect: QRectF):
         super().drawBackground(painter, rect)
-        for bglines in self.canvasboard.bg_edges:
-            self.draw_line(painter, **bglines)
-        for lines in self.canvasboard.canvas_texture['gr_lines']:
-            self.draw_line(painter, **lines)
-        for cell in self.canvasboard.canvas_texture['gr_cells']:
+        background = self.canvasboard.canvas_background
+        for edges in background['edges']:
+            self.draw_line(painter, **edges)
+        for cell in background['cells']:
             self.draw_cell(painter, **cell)
-        for tag in self.canvasboard.canvas_texture['gr_cltags']:
+        for tag in background['cltags']:
             self.draw_tag(painter, **tag)
-        for tags in self.canvasboard.canvas_texture['gr_coors']:
+        for tags in background['coors']:
             self.draw_text(painter, **tags)
-        for stars in self.canvasboard.canvas_texture['gr_stars']:
+        for stars in background['stars']:
+            self.draw_dot(painter, **stars)
+        for dot_pair in background['pieces']:
+            self.pieces_manager.add_dot_piece(*dot_pair)
+            painter.drawEllipse(
+                dot_pair[1][0] - 4, dot_pair[1][1] - 4,
+                8, 8)
+
+    def update_background(self):
+        painter = QPainter(self)
+        background = self.canvasboard.until_background
+        for edges in background['edges']:
+            self.draw_line(painter, **edges)
+        for cell in background['cells']:
+            self.draw_cell(painter, **cell)
+        for tag in background['cltags']:
+            self.draw_tag(painter, **tag)
+        for stars in background['stars']:
             self.draw_dot(painter, **stars)
     
 
@@ -339,6 +345,13 @@ class PiecesManager:
                 new_piece.setPos(*dot)
                 self.scene.addItem(new_piece)
                 self.pt_pieces[pt] = new_piece
+
+    def add_dot_piece(self, value, dot):
+        pieceui = self.app.pieceuis.get(value).copy()
+        new_piece = PieceItem(pieceui = pieceui)
+        new_piece.setZValue(LAYER_PIECES)
+        new_piece.setPos(*dot)
+        self.scene.addItem(new_piece)
 
     def remove_pieces(self, pts):
         """清除棋盘上的棋子"""

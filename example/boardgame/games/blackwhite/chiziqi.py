@@ -68,7 +68,7 @@ class Game_两吏拿一差(GameData):
         region = RegionPoints(pts1)
         neighbortable = NeighborTable.structure_only({region: 8})
         pts2 = [(i, j) for i in [0, 6] for j in [0, 1, 3, 4]] + [(i, j) for i in [1, 4] for j in [1, 3]]
-        neighbortable.add_mathvector_map({RegionPoints(pts2): [(0, 2), (0, -2), (2, 0), (-2, 0)]})
+        neighbortable.add_mathvector_map({RegionPoints(pts2): {(0, 2), (0, -2), (2, 0), (-2, 0)}})
         neighbortable.add_link_map({(2, 0): {(0, 0)}, (2, 4): {(0, 4)}, (4, 0): {(6, 0)}, (4, 4): {(6, 4)}})
         return {'matr': MatrixP((7, 5), region, neighbortable)}
 
@@ -265,7 +265,7 @@ class Move_蒸架棋之三步吃子法(Move_两吏拿一差):
 
 class Player_蒸架棋之三步吃子法(PlayerBlackWhite):
     def init_player_temporary(self):
-        return {{'黑':{'step': 0}, '白':{'step': 0}}}
+        return {'黑':{'step': 0}, '白':{'step': 0}}
     
     def init_pieceattr_group(self):
         return {'placeable': False, 
@@ -277,7 +277,7 @@ class Game_蒸架棋之三步吃子法(GameData):
     def init_gridattr(self):
         self.default_piece_pts = {1: [(i, j) for i in [1, 2] for j in [0, 1]],
                                   2: [(i, j) for i in [1, 2] for j in [2, 3]]}
-        region = RegionPoints([(i, j) for i in [1, 2] for j in range(4)] + [((i, j) for i in [0, 4] for j in [1, 2])])
+        region = RegionPoints([(i, j) for i in [1, 2] for j in range(4)] + [(i, j) for i in [0, 3] for j in [1, 2]])
         return {'matr': MatrixP((4, 4), region, NeighborTable.structure_only({region: 4}))}
 
     def init_move_manager(self):
@@ -400,6 +400,6 @@ class App_出奇制胜棋(AppBlackWhite):
     def canvas_attr(self):
         return {'coor_show': LinePositionEnum.Null,
             'bgedges_show': AxisEnum.XY, 'thickness': 10,
-            'cell_tags': [(0, 1)], 'tagtext': '出口'}
+            'cell_tags': [(0, 1)], 'tagtext': '门'}
 
 

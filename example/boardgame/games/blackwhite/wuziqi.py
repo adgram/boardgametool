@@ -115,13 +115,13 @@ class Move_反五子棋(Move_五子棋):
             self._step_game_over(player, GameOverEnum.Lose)
         self.turn_active()
 
-    def test_win2(self, player, new_pt, old_pt, val):
+    def test_win2(self, player, new_pt, old_pt, new_val):
         """判断是否存在连子"""
         orows = self.in_row(new_pt)
         if bool(rows := matrixgrid.flatten_as_vector(orows)) and not self.grid.over:
             self.update_tag_pts(player, rows, PieceTagEnum.Lose)
             self._step_game_over(player, GameOverEnum.Win)
-        self._step_add(player, val, [old_pt], follow = True)
+        self._step_add(player, new_val, [old_pt], follow = True)
         self.test_win1(player, old_pt)
 
     def move_nil_nil(self, player: 'PlayerData', active_piece, new_pt):
@@ -129,12 +129,12 @@ class Move_反五子棋(Move_五子棋):
         self._step_add(player, active_piece.value, [new_pt], follow = False)
         self.test_win1(player, new_pt)
 
-    def move_other_nil(self, player, active_piece, old_pt, old_val, new_pt):
+    def move_other_nil(self, player, active_piece, old_pt, new_pt):
         """移动到; 落子"""
         if not self.matr.search_line(old_pt, new_pt, 0, 8):
             return self.update_tag_pts(player, [], PieceTagEnum.Move)
-        self._step_move(player, old_val, [(old_pt, new_pt)])
-        self.test_win2(player, new_pt, old_pt, active_piece.value)
+        self._step_move(player, active_piece.value, [(old_pt, new_pt)])
+        self.test_win2(player, new_pt, old_pt, player.get_active())
 
     def _step_add(self, player, val, pts, follow):
         """绘制棋盘上的棋子"""

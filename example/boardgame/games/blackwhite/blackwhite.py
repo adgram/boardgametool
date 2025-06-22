@@ -8,22 +8,16 @@ from pathlib import Path
 class BlackWhiteUi(DefaultPiecesUi):
     def set_data(self, data, radius = 0):
         self.piecedata = data
-        self.pieceui[self.piecedata[1].value] = PieceUi(
+        self.pieceui[1] = PieceUi(
                 color = PieceColor(color = (255, 255, 255, 200),
                                    fill = (20, 20, 20, 200),
                                    gradient = (50, 50, 50, 170)),
-                text = PieceText(text = '黑',
-                                 height = 20,
-                                 color = (255, 255, 255, 200)),
                 radius = radius
                )
-        self.pieceui[self.piecedata[2].value] = PieceUi(
+        self.pieceui[2] = PieceUi(
                 color = PieceColor(color = (0, 0, 0, 200),
                                    fill = (255, 255, 255, 200),
                                    gradient = (225, 225, 225, 170)),
-                text = PieceText(text = '白',
-                                 height = 20,
-                                 color = (0, 0, 0, 200)),
                 radius = radius
                )
 
@@ -63,14 +57,11 @@ class PlayerBlackWhite(PlayerManager):
 
 class AppBlackWhite(Application):
     """黑白棋游戏规则"""
-    def init_rule(self):
-        self.name = '黑白棋'
-    
     def init_pieceuis(self):
         return BlackWhiteUi()
     
     def init_canvasattr(self):
-        canvas = {'color': (23, 140, 205, 150),
+        canvas = {'color': (23, 140, 205, 200),
             'fill': (23, 140, 205, 60),
             'coor_show': LinePositionEnum.Both,
             'bgedges_show': AxisEnum.XY,

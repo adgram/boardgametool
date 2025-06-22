@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QComboBox
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtCore import Qt
 from pathlib import Path
-from ..gamerule import APPS
+from ..games import APPS
 from .pysidegui_styles import *
 from .pysidecanvas import AppCanvas
 from .pysidetoobar import PenToolBar

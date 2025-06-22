@@ -68,9 +68,9 @@ class App_国象跳棋(AppBlackWhite):
         self.name = '国象跳棋'
         return Game_国象跳棋()
     
-    def init_grid(self):
-        return CanvasGrid(size = (8, 8), canvas_size = (750, 750),
-                          padding = (90, 90), is_net = False)
+    def grid_attr(self):
+        return {'size': (8, 8), 'canvas_size': (750, 750),
+                'padding': (90, 90), 'is_net': False}
     
     def canvas_attr(self):
         cells = [(i, j) for i in range(8) for j in range(8) if (i+j+1)%2]
@@ -92,7 +92,7 @@ class Move_卯兔争窝棋(Move_国象跳棋):
                  return [(old_pt, new_pt)]
             return []
         # 跳子
-        pts = self.matr.search_line(old_pt, new_pt, val = None, structure = 8)
+        pts = self.matr.search_line(old_pt, new_pt, structure = 8)
         if len(pts) <= 2:
             return []
         if pt0s[0] == new_pt:
@@ -113,7 +113,7 @@ class Game_卯兔争窝棋(GameData):
         region = RegionPoints([(i, j) for i in range(5) for j in range(5) if (i+j+1)%2])
         neighbortable = NeighborTable.structure_only({region: -4})
         neighbortable.add_mathvector_map({RegionPoints([(i, j) for i in range(0, 5, 2) 
-                                for j in range(0, 5, 2)]): [(0, 2), (0, -2), (2, 0), (-2, 0)]})
+                                for j in range(0, 5, 2)]): {(0, 2), (0, -2), (2, 0), (-2, 0)}})
         return {'matr': MatrixP((5, 5), region, neighbortable)}
 
     def init_move_manager(self):
@@ -130,15 +130,16 @@ class App_卯兔争窝棋(AppBlackWhite):
         self.name = '卯兔争窝棋'
         return Game_卯兔争窝棋()
     
-    def init_grid(self):
-        return CanvasGrid(size = (5, 5), canvas_size = (750, 750), padding = (110, 110))
+    def grid_attr(self):
+        return {'size': (5, 5), 'canvas_size': (750, 750), 'padding': (110, 110)}
     
     def canvas_attr(self):
         return {'coor_show': LinePositionEnum.Null, 'thickness': 7, 'bgedges_show': AxisEnum.Null, 
-            'canvas_lines': [((0, 0), (4, 0)), ((0, 4), (4, 4)), ((4, 0), (4, 4)), ((0, 0), (0, 4)),
-                             ((0, 0), (4, 4)), ((4, 0), (0, 4)), ((0, 2), (4, 2)), ((2, 0), (2, 4)),
-                             ((0, 2), (2, 4)), ((2, 0), (4, 2)), ((0, 2), (2, 0)), ((2, 4), (4, 2))],
-            'cell_tags': [(4, 2)], 'tagicon': Path(__file__).parent/'images/圈.svg',
+            'canvas_lines': [((0, 0), (4, 0)), ((0, 4), (4, 4)), ((4, 0), (4, 1.5)), ((0, 0), (0, 4)),
+                             ((0, 0), (4, 4)), ((4, 0), (0, 4)), ((0, 2), (3.5, 2)), ((2, 0), (2, 4)),
+                             ((0, 2), (2, 4)), ((2, 0), (3.55, 1.55)), ((0, 2), (2, 0)),
+                             ((2, 4), (3.55, 2.45)), ((4, 2.5), (4, 4))],
+            'cell_tags': [(4, 2)], 'tagicon': Path(__file__).parent/'images/方.svg',
             'iconsize': (150, 150), 'tagtext': '阱'}
 
 
@@ -147,7 +148,7 @@ class App_卯兔争窝棋(AppBlackWhite):
 class Move_行蛙跳棋(Move_国象跳棋):
     """行蛙跳棋"""
     def get_move_links(self, val, old_pt, new_pt):
-        pts = self.matr.search_line(old_pt, new_pt, val = None, structure = -4)
+        pts = self.matr.search_line(old_pt, new_pt, structure = -4)
         if 3 <= len(pts) <= 4 and self.matr.get_value(pts[1]) and self.matr.get_value(pts[-2]):
             return [(old_pt, new_pt)]
         return []

@@ -1153,6 +1153,9 @@ class CanvasGrid:
         """计算网格坐标系线框"""
         ...
 
+    def get_pieces_box(self, n):
+        """获取棋盒列表"""
+        ...
 
 
 

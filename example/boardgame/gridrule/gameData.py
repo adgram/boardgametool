@@ -163,10 +163,9 @@ class PlayerData:
             piece.count = piece_count.get(piece.value, None) # 剩余数量
             piece.num = 0           # 棋盘棋子总数
 
-    def get_active(self, val = None):
+    def get_active(self):
         """设置当前棋子"""
-        self.active = val or self.pieces.keys().__iter__().__next__()
-        return self.active
+        return self.active or self.pieces.keys().__iter__().__next__()
 
     def clear_current(self):
         """清除临时坐标"""
@@ -201,47 +200,44 @@ class PlayerData:
         old_pt = self.current_pt
         old_val = game.grid.get_value(old_pt)
         self.clear_current()
-        if old_val in self.pieces:
-            piece:PieceData = self.pieces[self.get_active(old_val)]
-        elif new_val in self.pieces:
-            piece:PieceData = self.pieces[self.get_active(new_val)]
-        else:
-            piece:PieceData = self.pieces[self.get_active()]
-        if old_pt and old_pt == new_pt:
-            game.set_active_pt(piece.player, None)
+        piece:PieceData = self.pieces[self.get_active()]
+        old_piece: PieceData = game.pieces.get(old_val, None)
+        new_piece: PieceData = game.pieces.get(new_val, None)
+        if old_pt == new_pt:
+            game.set_active_pt(self, None)
             return
         match (self.has_piece(old_val), self.has_piece(new_val)):
             case (0, 0):
-                piece:PieceData = self.pieces[self.get_active()]
                 if piece.can_placeable():
                     game.move_manager.move_nil_nil(self, piece, new_pt)
             case (0, 1):
-                piece:PieceData = self.pieces[self.get_active(new_val)]
                 if MoveRuleEnum.Move in piece.movable or MoveRuleEnum.Kill in piece.movable:
-                    game.move_manager.move_nil_self(self, piece, new_pt)
-                    game.set_active_pt(piece.player, new_pt)
+                    game.set_active_pt(self, new_pt)
+                elif piece.can_occupyable(new_val):
+                    game.move_manager.move_nil_self(self, piece, new_pt, new_val)
             case (0, -1):
                 if piece.can_occupyable(new_val):
                     game.move_manager.move_nil_other(self, piece, new_pt, new_val)
-                if MoveRuleEnum.Omove in piece.movable or MoveRuleEnum.Okill in piece.movable:
-                    game.set_active_pt(piece.player, new_pt)
+                if MoveRuleEnum.Omove in new_piece.movable or MoveRuleEnum.Okill in new_piece.movable:
+                    game.set_active_pt(self, new_pt)
             case (1, 0):
-                if MoveRuleEnum.Move in piece.movable:
-                    game.move_manager.move_self_nil(self, piece, old_pt, new_pt)
+                if MoveRuleEnum.Move in old_piece.movable:
+                    game.move_manager.move_self_nil(self, old_piece, old_pt, new_pt)
             case (1, 1):
-                game.move_manager.move_nil_self(self, piece, new_pt)
+                if old_piece.can_squeezable(new_val):
+                    game.move_manager.move_self_self(self, old_piece, old_pt, new_pt, new_val)
             case (1, -1):
-                if MoveRuleEnum.Kill in piece.movable and piece.can_squeezable(new_val):
-                    game.move_manager.move_self_other(self, piece, old_pt, new_pt, new_val)
+                if MoveRuleEnum.Kill in old_piece.movable and old_piece.can_squeezable(new_val):
+                    game.move_manager.move_self_other(self, old_piece, old_pt, new_pt, new_val)
             case (-1, 0):
-                if MoveRuleEnum.Omove in piece.movable:
-                    game.move_manager.move_other_nil(self, piece, old_pt, old_val, new_pt)
+                if MoveRuleEnum.Omove in old_piece.movable:
+                    game.move_manager.move_other_nil(self, old_piece, old_pt, new_pt)
             case (-1, 1):
-                if MoveRuleEnum.Okill in piece.movable and \
-                            game.player_manager.get_piece(val = old_val).can_squeezable(piece.value):
-                    game.move_manager.move_other_self(self, piece, old_pt, old_val, new_pt)
+                if MoveRuleEnum.Okill in old_piece.movable and \
+                            old_piece.can_squeezable(new_val):
+                    game.move_manager.move_other_self(self, old_piece, old_pt, new_pt, new_val)
             case (-1, -1):
-                game.move_manager.move_nil_other(self, piece, new_pt, new_val)
+                game.move_manager.move_other_other(self, old_piece, old_pt, new_pt, new_val)
 
 
 
@@ -531,32 +527,40 @@ class MoveManager:
         elif key in ['swap', 'move']:
             self.piece_trans_signals.connect(key, func)
 
-    def move_nil_nil(self, player, active_piece, new_pt):
+    def move_nil_nil(self, player, active_piece, pt):
         """在空点落子"""
         self.update_tag_pts(player, [], PieceTagEnum.Add)
 
-    def move_nil_self(self, player, active_piece, new_pt):
+    def move_nil_self(self, player, active_piece, pt, old_val):
         """选中棋子"""
         self.update_tag_pts(player, [], PieceTagEnum.Add)
 
-    def move_nil_other(self, player, active_piece, new_pt, new_val):
+    def move_nil_other(self, player, active_piece, pt, old_val):
         """落子击杀；选中棋子"""
         self.update_tag_pts(player, [], PieceTagEnum.Add)
 
     def move_self_nil(self, player, active_piece, old_pt, new_pt):
         """移动到; 落子"""
         self.update_tag_pts(player, [], PieceTagEnum.Add)
+    
+    def move_self_self(self, player, active_piece, old_pt, new_pt, new_val):
+        """移动到"""
+        self.update_tag_pts(player, [], PieceTagEnum.Add)
 
     def move_self_other(self, player, active_piece, old_pt, new_pt, new_val):
         """移子击杀；选中棋子"""
         self.update_tag_pts(player, [], PieceTagEnum.Add)
 
-    def move_other_nil(self, player, active_piece, old_pt, old_val, new_pt):
+    def move_other_nil(self, player, active_piece, old_pt, new_pt):
         """移动到; 落子"""
         self.update_tag_pts(player, [], PieceTagEnum.Add)
 
-    def move_other_self(self, player, active_piece, old_pt, old_val, new_pt):
+    def move_other_self(self, player, active_piece, old_pt, new_pt, new_val):
         """移子击杀；选中棋子"""
+        self.update_tag_pts(player, [], PieceTagEnum.Add)
+
+    def move_other_other(self, player, active_piece, old_pt, new_pt, new_val):
+        """移动到"""
         self.update_tag_pts(player, [], PieceTagEnum.Add)
 
     def move_button(self, player, pt):
@@ -743,11 +747,6 @@ class PlayerManager:
     @property
     def grid(self):
         return self.game.grid
-    
-    def set_active_piece(self, val = None):
-        """设置当前棋子"""
-        self.pieces[val].player.get_active(val)
-        self.call_signal('active_piece', self.pieces[val].player.name, val)
 
     def set_active(self, val = None, name = None, player = None):
         """设置当前棋手"""
@@ -766,7 +765,10 @@ class PlayerManager:
 
     def get_player(self, val = None, name = None, player = None):
         """获取棋手对象"""
-        return player or self.players.get(name, None) or self.pieces.get(val, None).player
+        if val or name or player:
+            return player or self.players.get(name, None) or self.pieces.get(val, None).player
+        else:
+            return self.active_player
 
     @property
     def common_player(self):
@@ -1011,7 +1013,7 @@ class GameData:
             return
         if pt not in self.matr.region.points():
             return
-        player = self.player_manager.players.get(name, None) or self.player_manager.active_player
+        player = self.player_manager.get_player(name = name)
         if self.on_tag == '':
             player.move_point(pt, self)
         else:
@@ -1021,8 +1023,17 @@ class GameData:
         """点击非格点行为"""
         if self.grid.over and self.in_race:
             return
-        player = self.player_manager.players.get(name, None) or self.player_manager.active_player
+        player = self.player_manager.get_player(name = name)
         self.move_manager.move_button(player, pt)
+
+    def set_active_piece(self, value, name = None):
+        """点击棋盘 点击组合：己方、对方、空白"""
+        if self.grid.over and self.in_race:
+            return
+        player = self.player_manager.get_player(name = name)
+        if player.has_piece(value):
+            player.active = value
+            self.call_signal('active_piece', player.name, value)
 
     def set_symbol_tag(self, tag):
         """设置当前标记为标记"""
@@ -1132,6 +1143,10 @@ class GameData:
     def get_piece(self, pt = None, val = None, piece = None) -> PieceData:
         """获取棋子"""
         return self.player_manager.get_piece(pt = pt, val = val, piece = piece)
+
+    def get_player(self, val = None, name = None, player = None):
+        """获取棋手对象"""
+        return self.player_manager.get_player(val, name, player)
 
     @property
     def active_player(self):
