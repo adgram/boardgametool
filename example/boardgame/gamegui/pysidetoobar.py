@@ -30,7 +30,7 @@ class PenToolBar(QWidget):
         self.create_history_buttons()
         self.create_tags_buttons()
         self.layout.addStretch(1)
-        self.reset_btns()
+        self.reset_btns("比赛")
 
     def create_piece_box(self, width: int):
         ''' 棋子展示区域 '''
@@ -41,8 +41,8 @@ class PenToolBar(QWidget):
         self.layout.addWidget(piece_box)
         self.layout.addSpacing(20)
     
-    def reset_btns(self):
-        self.btn_race_mode.setText("比赛")
+    def reset_btns(self, mode):
+        self.btn_race_mode.setText("打谱" if mode == "比赛" else "比赛")
         self._toggle_race_mode()
     
     def create_rule_buttons(self):
@@ -53,10 +53,15 @@ class PenToolBar(QWidget):
     
     def _toggle_race_mode(self):
         """切换比赛/打谱模式"""
-        b = (self.btn_race_mode.text() == "比赛")
-        self.btn_race_mode.setText("打谱" if b else "比赛")
-        self.qapp.set_race_mode(b)
-        self._set_race_mode(b)
+        in_race = (self.btn_race_mode.text() != "比赛")
+        self.btn_race_mode.setText("比赛" if in_race else "打谱")
+        if in_race:
+            self.clear_checked()
+        self.qapp.set_race_mode(in_race)
+        for btn in self.condition_buttons['drace']:
+            btn.setVisible(not in_race)
+        for btn in self.condition_buttons['race']:
+            btn.setVisible(in_race)
         
     def create_player_buttons(self, players):
         ''' 玩家按钮 '''
@@ -163,13 +168,6 @@ class PenToolBar(QWidget):
             if btn:
                 btn.setChecked(False)
         self.active_buttons.clear()
-
-    def _set_race_mode(self, is_race):
-        for btn in self.condition_buttons['drace']:
-            btn.setVisible(not is_race)
-        for btn in self.condition_buttons['race']:
-            btn.setVisible(is_race)
-            btn.setChecked(False)
     
     def _create_hbox_container(self):
         container = QWidget()

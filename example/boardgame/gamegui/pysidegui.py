@@ -98,8 +98,8 @@ class BoardGameApp(QMainWindow):
 
     def new_game(self):
         """新游戏"""
-        self.qapp_canvas.clear_all()
-        self.tool_bar.reset_btns()
+        self.qapp_canvas.pieces_manager.clear_all()
+        self.tool_bar.reset_btns("比赛")
         self.app.rebegin()
         self.app.add_default_piece_pts()
         self.resize_to_canvas()  # 添加这一行
@@ -159,10 +159,11 @@ class BoardGameApp(QMainWindow):
 
     def open_game(self):
         """打开棋谱"""
-        self.qapp_canvas.clear_all()
+        self.qapp_canvas.pieces_manager.clear_all()
         self.app.rebegin()
         self.app.load_data(self._open_data())
         self.app.add_default_piece_pts()
+        self.tool_bar.reset_btns("打谱")
 
     def exit_game(self):
         """退出游戏"""
