@@ -276,13 +276,9 @@ class Application:
             case GameOverEnum.Stop:
                 return '棋局终止'
 
-    def on_race(self):
-        """比赛"""
-        self.gamerule.on_race()
-
-    def out_race(self):
-        """打谱"""
-        self.gamerule.out_race()
+    def set_race_mode(self, is_race):
+        """比赛、打谱模式"""
+        self.gamerule.set_race_mode(is_race)
 
     def give_up(self):
         self.gamerule.give_up()
@@ -304,9 +300,9 @@ class Application:
         """轮换执棋"""
         self.gamerule.player_manager.on_turns()
 
-    def on_symbol_tag(self, tag):
+    def set_symbol_tag(self, tag):
         """设置当前棋手为1棋手"""
-        self.gamerule.on_symbol_tag(tag)
+        self.gamerule.set_symbol_tag(tag)
     
     def turn_player(self):
         """切换棋手"""

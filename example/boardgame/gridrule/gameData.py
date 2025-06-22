@@ -1024,14 +1024,11 @@ class GameData:
         player = self.player_manager.players.get(name, None) or self.player_manager.active_player
         self.move_manager.move_button(player, pt)
 
-    def on_symbol_tag(self, tag):
+    def set_symbol_tag(self, tag):
         """设置当前标记为标记"""
         if self.in_race:
             return
-        if self.on_tag == tag:
-            self.on_tag = ''
-        else:
-            self.on_tag = tag
+        self.on_tag = tag
 
     def set_matr_default_piece_pts(self):
         """设置默认棋子"""
@@ -1054,17 +1051,14 @@ class GameData:
             self.grid.over = True
             self.call_signal('game_over', player.name, tag)
 
-    def on_race(self):
+    def set_race_mode(self, is_race):
         """比赛"""
-        self.in_race = True
+        self.in_race = is_race
         if self.start_clock:
-            self.grid.clock.start_clock()
-
-    def out_race(self):
-        """打谱"""
-        if self.start_clock:
-            self.grid.clock.over_clock()
-        self.in_race = False
+            if is_race:
+                self.grid.clock.start_clock()
+            else:
+                self.grid.clock.over_clock()
 
     def give_up(self, player = None):
         """认输"""

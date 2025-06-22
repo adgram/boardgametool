@@ -1,3 +1,3 @@
-from boardgame.pysidegui import GameLauncher
+from boardgame import GameLauncher
 
 GameLauncher.game_start()
