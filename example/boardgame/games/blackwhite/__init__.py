@@ -1,46 +1,13 @@
-from .wuziqi import *
-from .wuziqi_jingziqi import *
-from .wuziqi_tongbu import *
-from .weiqi import *
 from .fanzhuanqi import *
 from .biesiniu import *
 from .tiaoqi import *
 from .chiziqi import *
 from .gongfangqi import *
 from .xingqi import *
-from ...gridrule import APPS
 
 
 
 APPS.update({
-    '五子棋': App_五子棋,
-    '井字棋': App_井字棋,
-    '六消井字棋': App_六消井字棋,
-    '六连棋': App_六连棋,
-    '套娃井字棋': App_套娃井字棋,
-    '反五子棋': App_反五子棋,
-    '斜胜棋': App_斜胜棋,
-    '重力四子棋': App_重力四子棋,
-    '三六九棋': App_三六九棋,
-    '旋转五子棋': App_旋转五子棋,
-    '玉攻棋': App_玉攻棋,
-    '九宫棋': App_九宫棋,
-    '双线五子棋': App_双线五子棋,
-    '引力四子棋': App_引力四子棋,
-    '墨棋': App_墨棋,
-    '同步五子棋': App_同步五子棋,
-
-    '围棋13': App_围棋13,
-    '围棋': App_围棋19,
-    '围棋9': App_围棋9,
-    '围棋吃子': App_围棋吃子,
-    '无边界围棋': App_无边界围棋,
-    '二子围棋': App_二子围棋,
-    '环棋': App_环棋,
-    '九路飞刀': App_九路飞刀,
-    '翻转围棋': App_翻转围棋,
-    '不围棋': App_不围棋,
-
     '黑白棋': App_黑白棋,
     '翻田棋': App_翻田棋,
     '翻箱倒柜棋': App_翻箱倒柜棋,
@@ -74,7 +41,4 @@ APPS.update({
     '攻防棋': App_攻防棋,
 
     '连方棋': App_连方棋,
-    '直角五子棋': App_直角五子棋,
-    '梅花棋': App_梅花棋,
-
 })

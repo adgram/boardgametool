@@ -1,5 +1,5 @@
 import sys
-from ..gridrule import ObjJson
+from ..gridrule import ObjJson, CommonPlayer
 from PySide6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QComboBox,
                                QHBoxLayout, QPushButton, QLabel, QWidget,
                                QDialog, QMessageBox, QFileDialog)
@@ -92,8 +92,9 @@ class BoardGameApp(QMainWindow):
         
     def game_over(self, name, tag):
         '''游戏结束弹窗'''
+        if name == CommonPlayer: name = self.app.active_player_name
         about_dialog = GameDialog(self, "游戏结束", f"{name}{\
-                            self.app.gameover_tag_name(tag)}")
+                            self.app.gameover_tag(tag)}")
         about_dialog.exec()
 
     def new_game(self):
@@ -101,7 +102,7 @@ class BoardGameApp(QMainWindow):
         self.qapp_canvas.pieces_manager.clear_all()
         self.tool_bar.reset_btns("比赛")
         self.app.rebegin()
-        self.app.add_default_piece_pts()
+        self.app.refresh_matr_pts()
         self.resize_to_canvas()  # 添加这一行
     
     def switch_game(self):
@@ -162,7 +163,7 @@ class BoardGameApp(QMainWindow):
         self.qapp_canvas.pieces_manager.clear_all()
         self.app.rebegin()
         self.app.load_data(self._open_data())
-        self.app.add_default_piece_pts()
+        self.app.refresh_matr_pts()
         self.tool_bar.reset_btns("打谱")
 
     def exit_game(self):

@@ -35,28 +35,104 @@ class 象棋Ui(DefaultPiecesUi):
 
 
 
-class Move_象棋(MoveManager):
-    """象棋"""
-    def init_data(self):
-        self.step_func = {'move': self.step_move, 'kill': self.step_kill}
-        self.reverse_func = {'move': self.reverse_move, 'kill': self.reverse_kill}
 
-    def test_win(self, player: 'PlayerData', value):
+class Game_象棋(GameData):
+    """象棋"""
+    def init_players(self):
+        return [self.player_red(), self.player_black()]
+
+    def player_red(self, **kwargs):
+        """红棋玩家"""
+        player = self.player_define(**{'name': '红', **kwargs})
+        for i in range(1, 8):
+            player.add_piece(self.piece_define(value = i, squeeze = [0],
+                            moverules = [MoveRuleEnum.Move, MoveRuleEnum.Kill]))
+        return player
+
+    def player_black(self, **kwargs):
+        """黑棋玩家"""
+        player = self.player_define(**{'name': '黑', **kwargs})
+        for i in range(11, 18):
+            player.add_piece(self.piece_define(value = i, squeeze = [0],
+                            moverules = [MoveRuleEnum.Move, MoveRuleEnum.Kill]))
+        return player
+
+    def init_matr(self):
+        matr = MatrixData((9, 10), structure = 4)
+        matr_region = RegionRect((9, 10))
+        # 車、炮
+        cross_vects = [Vector2D(0, i) for i in range(-9, 9)] +\
+                        [Vector2D(i, 0) for i in range(-9, 9)]
+        cross_region = RegionPoints(cross_vects)
+        cross_dest1 = MoveDest(region = matr_region, mathvector = cross_region)
+        matr.set_dests({1: cross_dest1, 11: cross_dest1, 3: cross_dest1, 13: cross_dest1})
+        # 马
+        cross_dest2 = MoveDest(region = matr_region,
+                mathvector = RegionPoints([(1, 2), (1, -2), (-1, 2), (-1, -2),
+                                           (2, 1), (-2, 1), (2, -1), (-2, -1)]))
+        matr.set_dests({2: cross_dest2, 12: cross_dest2})
+        # 相
+        mathvector5 = RegionPoints([(2, 2), (2, -2), (-2, 2), (-2, -2)])
+        region5 = RegionRect((0, 5), (9, 10))
+        region15 = RegionRect((0, 0), (9, 5))
+        matr.set_dests({5: MoveDest(region = region5, mathvector = mathvector5),
+                        15: MoveDest(region = region15, mathvector = mathvector5)})
+        # 士
+        mathvector4 = RegionPoints([(1, 1), (1, -1), (-1, 1), (-1, -1)])
+        region4 = RegionRect((3, 7), (6, 10))
+        region14 = RegionRect((3, 0), (6, 3))
+        matr.set_dests({4: MoveDest(region = region4, mathvector = mathvector4),
+                        14: MoveDest(region = region14, mathvector = mathvector4)})
+        # 将帅
+        mathvector6 = RegionPoints([(1, 0), (0, -1), (-1, 0), (0, 1)])
+        matr.set_dests({6: MoveDest(region = region4, mathvector = mathvector6),
+                        16: MoveDest(region = region14, mathvector = mathvector6)})
+        # 兵卒
+        mathvector7 = RegionPoints([(1, 0), (-1, 0), (0, -1)])
+        mathvector17 = RegionPoints([(1, 0), (-1, 0), (0, 1)])
+        matr.set_dests({7: MoveDest(region = matr_region, mathvector = mathvector7),
+                        17: MoveDest(region = matr_region, mathvector = mathvector17)})
+        return matr
+    
+    def init_matr_pts(self):
+        return {
+            # 红方棋子（1-7）
+            1: [(0, 9), (8, 9)],   # 車
+            2: [(1, 9), (7, 9)],   # 馬
+            3: [(1, 7), (7, 7)],   # 炮
+            4: [(3, 9), (5, 9)],   # 仕
+            5: [(2, 9), (6, 9)],   # 相
+            6: [(4, 9)],           # 帅
+            7: [(0, 6), (2, 6), (4, 6), (6, 6), (8, 6)],  # 兵
+            # 黑方棋子（11-17）
+            11: [(0, 0), (8, 0)],  # 車
+            12: [(1, 0), (7, 0)],  # 馬
+            13: [(1, 2), (7, 2)],  # 炮
+            14: [(3, 0), (5, 0)],  # 士
+            15: [(2, 0), (6, 0)],  # 象
+            16: [(4, 0)],          # 将
+            17: [(0, 3), (2, 3), (4, 3), (6, 3), (8, 3)]  # 卒
+        }
+
+    def init_step_func(self):
+        return {'move': (self.step_move, self.reverse_move),
+                'kill': (self.step_kill, self.reverse_kill)}
+
+    def test_win(self, player: PlayerData, value):
         """模拟并测试该点落子后的情况"""
         match (player.name, value):
             case ('红', 16):
-                return self._step_game_over(player, GameOverEnum.Win)
+                return self.do_game_over(player.name, GameOverEnum.Win)
             case ('黑', 6):
-                return self._step_game_over(player, GameOverEnum.Win)
-        self.turn_active()
+                return self.do_game_over(player.name, GameOverEnum.Win)
 
-    def test_win2(self, player: 'PlayerData', pt):
+    def test_win2(self, player: PlayerData, pt):
         """模拟并测试该点落子后的情况"""
         if pt[0] in [3, 4, 5]:
             for opt in self.matr.search_value(6):
                 for npt in self.matr.search_value(16):
                     if self.matr.search_to_face(opt, npt, structure = 4):
-                        return self._step_game_over(player, GameOverEnum.Lose)
+                        return self.do_game_over(player.name, GameOverEnum.Lose)
         self.turn_active()
     
     def _move_test(self, value, old_pt, new_pt):
@@ -101,110 +177,24 @@ class Move_象棋(MoveManager):
                 return False
         return True
 
-    def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
+    def move_self_nil(self, player: PlayerData, active_piece: 'PieceData', old_pt, new_pt):
         value = active_piece.value
         if not self.move_test(value, old_pt, new_pt):
-            return self.update_tag_pts(player, [], PieceTagEnum.Move)
-        self._step_move(player, value, [(old_pt, new_pt)])
+            return self.update_tag_pts(player.name, [], "Move")
+        self.do_move(player.name, value, [(old_pt, new_pt)])
         self.test_win2(player, old_pt)
 
-    def move_self_other(self, player: 'PlayerData', active_piece, old_pt, new_pt, new_val):
+    def move_self_other(self, player: PlayerData, active_piece: 'PieceData', old_pt, new_pt, new_val):
         value = active_piece.value
         if not self.kill_test(value, old_pt, new_pt):
-            return self.update_tag_pts(player, [], PieceTagEnum.Move)
-        self._step_kill(player, value, new_val, [(old_pt, new_pt)])
+            return self.update_tag_pts(player.name, [], "Move")
+        self.do_kill(player.name, value, new_val, [(old_pt, new_pt)])
         self.test_win(player, new_val)
         self.test_win2(player, old_pt)
 
-
-
-class Player_象棋(PlayerManager):
-    """象棋"""
-    def init_player_group(self):
-        return {'红':self.player_red(), '黑':self.player_black()}
-
-    def player_red(self, **kwargs):
-        """红棋玩家"""
-        player = self.player_define(**{'name': '红', **kwargs})
-        for i in range(1, 8):
-            player.pieces[i] = self.piece_define(player = player,
-                            movable = [MoveRuleEnum.Move, MoveRuleEnum.Kill], 
-                            value = i, squeeze = [0])
-        return player
-
-    def player_black(self, **kwargs):
-        """黑棋玩家"""
-        player = self.player_define(**{'name': '黑', **kwargs})
-        for i in range(11, 18):
-            player.pieces[i] = self.piece_define(player = player,
-                            movable = [MoveRuleEnum.Move, MoveRuleEnum.Kill], 
-                            value = i, squeeze = [0])
-        return player
-
-
-
-class Game_象棋(GameData):
-    """象棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {
-            # 红方棋子（1-7）
-            1: [(0, 9), (8, 9)],   # 車
-            2: [(1, 9), (7, 9)],   # 馬
-            3: [(1, 7), (7, 7)],   # 炮
-            4: [(3, 9), (5, 9)],   # 仕
-            5: [(2, 9), (6, 9)],   # 相
-            6: [(4, 9)],           # 帅
-            7: [(0, 6), (2, 6), (4, 6), (6, 6), (8, 6)],  # 兵
-            # 黑方棋子（11-17）
-            11: [(0, 0), (8, 0)],  # 車
-            12: [(1, 0), (7, 0)],  # 馬
-            13: [(1, 2), (7, 2)],  # 炮
-            14: [(3, 0), (5, 0)],  # 士
-            15: [(2, 0), (6, 0)],  # 象
-            16: [(4, 0)],          # 将
-            17: [(0, 3), (2, 3), (4, 3), (6, 3), (8, 3)]  # 卒
-        }
-        matr = MatrixP((9, 10), structure = 4)
-        matr_region = RegionRect((9, 10))
-        # 車、炮
-        cross_vects = [Vector2D(0, i) for i in range(-9, 9)] +\
-                        [Vector2D(i, 0) for i in range(-9, 9)]
-        cross_region = RegionPoints(cross_vects)
-        cross_dest1 = MoveDest(region = matr_region, mathvector = cross_region)
-        matr.set_dests({1: cross_dest1, 11: cross_dest1, 3: cross_dest1, 13: cross_dest1})
-        # 马
-        cross_dest2 = MoveDest(region = matr_region,
-                mathvector = RegionPoints([(1, 2), (1, -2), (-1, 2), (-1, -2),
-                                           (2, 1), (-2, 1), (2, -1), (-2, -1)]))
-        matr.set_dests({2: cross_dest2, 12: cross_dest2})
-        # 相
-        mathvector5 = RegionPoints([(2, 2), (2, -2), (-2, 2), (-2, -2)])
-        region5 = RegionRect((0, 5), (9, 10))
-        region15 = RegionRect((0, 0), (9, 5))
-        matr.set_dests({5: MoveDest(region = region5, mathvector = mathvector5),
-                        15: MoveDest(region = region15, mathvector = mathvector5)})
-        # 士
-        mathvector4 = RegionPoints([(1, 1), (1, -1), (-1, 1), (-1, -1)])
-        region4 = RegionRect((3, 7), (6, 10))
-        region14 = RegionRect((3, 0), (6, 3))
-        matr.set_dests({4: MoveDest(region = region4, mathvector = mathvector4),
-                        14: MoveDest(region = region14, mathvector = mathvector4)})
-        # 将帅
-        mathvector6 = RegionPoints([(1, 0), (0, -1), (-1, 0), (0, 1)])
-        matr.set_dests({6: MoveDest(region = region4, mathvector = mathvector6),
-                        16: MoveDest(region = region14, mathvector = mathvector6)})
-        # 兵卒
-        mathvector7 = RegionPoints([(1, 0), (-1, 0), (0, -1)])
-        mathvector17 = RegionPoints([(1, 0), (-1, 0), (0, 1)])
-        matr.set_dests({7: MoveDest(region = matr_region, mathvector = mathvector7),
-                        17: MoveDest(region = matr_region, mathvector = mathvector17)})
-        return {'matr': matr}
-
-    def init_move_manager(self):
-        return Move_象棋(self)
-
-    def init_player_manager(self):
-        return Player_象棋(self)
+    def move_nil_self(self, player: PlayerData, active_piece: PieceData, pt, old_val):
+        """选中棋子"""
+        print(active_piece.get_flags(MoveRuleEnum.Move))
 
 
 
@@ -252,7 +242,7 @@ class App_象棋(Application):
     3. 不能后退'''
         yls = [((i, 0), (i, 4)) for i in range(9)]
         yls.extend([((i, 5), (i, 9)) for i in range(9)])
-        return {'color': (23, 140, 205, 150),
+        return {'color': (23, 140, 205, 200),
             'coor_show': LinePositionEnum.Null,
             'bgedges_show': AxisEnum.X,
             'canvas_image': Path(__file__).parent/'images/background.jpg',

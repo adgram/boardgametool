@@ -2,11 +2,7 @@ from typing import Callable
 from enum import Enum
 
 
-
 NullValue = -128
-CommonPlayer = "_CommonPlayer_"
-AutoPlayer = "_AutoPlayer_"
-
 
 
 class Vector2D:
@@ -228,7 +224,7 @@ class AxisEnum(Enum):
 
 
 class NeighborTypeEnum(Enum):
-    """NeighborTableDataType数据模式"""
+    """NeighborTable数据模式"""
     Structure = 0
     Direction = 1
     Mathvector = 2
@@ -448,13 +444,18 @@ class Direction:
 
 class NeighborTable:
     __slots__ = ('structure_map', 'direction_map', 'mathvector_map',
-                 'link_map', 'nbrtype_map')
+                 'link_map')
     def __init__(self):
         self.structure_map: dict[RegionBase, int] = {}
         self.direction_map: dict[RegionBase, Direction] = {}
         self.mathvector_map: dict[RegionBase, set[Vector2D]] = {}
         self.link_map: dict[Vector2D, set[Vector2D]] = {}
-        self.nbrtype_map: dict[NeighborTypeEnum, bool] = {}
+
+    def set_flag(type:NeighborTypeEnum, state:bool):
+        ...
+
+    def get_flag(type:NeighborTypeEnum):
+        ...
     
     def clear_nbrs(self):
         ...
@@ -514,7 +515,7 @@ class NeighborTable:
     def get_nbrs(self, pt, baseregion):
         ...
 
-    def  get_nbrs_vects(self, pt, baseregion):
+    def get_nbrs_vects(self, pt, baseregion):
         ...
 
     def get_axises(self, pt, baseregion):
@@ -702,7 +703,7 @@ class MoveDest:
 
 
 
-class MatrixP:
+class MatrixData:
     """矩阵模板"""
     def __init__(self, size: tuple[int,int], region:RegionBase,
                  neighbortable: NeighborTable, array2d: list[list[int]],
@@ -836,7 +837,7 @@ class MatrixP:
         """获取边缘点"""
         ...
 
-    def to_nil(self, pts):
+    def to_null(self, pts):
         """点pt归空"""
         ...
 
@@ -1157,192 +1158,3 @@ class CanvasGrid:
         """获取棋盒列表"""
         ...
 
-
-
-class MoveIndexNode:
-    """某手棋的数据节点"""
-    __slots__ = ('player', 'index', 'next', 'prev')
-    def __init__(self, player = '', index:int = -1):
-        self.player = player
-        self.index = index
-        self.next: list[MoveIndexNode] = []
-        self.prev: MoveIndexNode|None = None
-
-
-class MoveHistory:
-    """行棋历史记录"""
-    __slots__ = ('head', 'current')
-    def __init__(self):
-        self.head = MoveIndexNode()  # 默认头节点
-        self.current:MoveIndexNode = self.head
-        # self.branches = []
-
-    def move(self, player, index):
-        """执行节点"""
-        ...
-
-    def undo(self)-> tuple[str, int]:
-        """悔棋一步"""
-        ...
-
-    def retract(self, player)-> list[tuple[str, int]]:
-        """悔棋到上次这个玩家行棋前"""
-        ...
-
-    def back(self)-> tuple[str, MoveIndexNode]:
-        """返回上一步。返回上一步玩家和撤回的数据"""
-        ...
-
-    def forward(self)-> tuple[str, MoveIndexNode]:
-        """跳到下一步。返回下一步玩家和下一步的数据"""
-        ...
-
-    def jump_to_path(self, path):
-        """跳转到指定路径
-        """
-        ...
-
-    def current_index(self):
-        """获取当前数据"""
-        ...
-
-    def current_player(self):
-        """获取当前数据"""
-        ...
-
-    def current_path(self):
-        """获取当前路径"""
-        ...
-    
-    def prev_move(self):
-        ...
-    
-    def prev_player(self):
-        ...
-
-    def prev_index(self) -> dict:
-        ...
-    
-    def to_json(self, current = None) -> list:
-        """序列化历史记录树结构"""
-        ...
-
-    @classmethod
-    def from_json(cls, data: list, head_begin = False) -> 'MoveHistory':
-        """反序列化历史记录"""
-        ...
-
-    def find_depth_node(self) -> MoveIndexNode:
-        """通过遍历找到最长路径末端作为当前节点"""
-        ...
-
-    def search(self, index:int) -> MoveIndexNode:
-        """通过遍历找到最长路径末端作为当前节点"""
-        ...
-
-    def get_path(self, item : MoveIndexNode) -> list[int]:
-        """获取指定节点的完整路径"""
-        ...
-
-    def get_path_from_branch(self, item : MoveIndexNode) -> tuple[MoveIndexNode, int]:
-        """获取指定节点的局部位置"""
-        ...
-
-    def get_path_length(self, index:int) -> int:
-        ...
-
-    def get_current_path_length(self) -> int:
-        ...
-
-    def from_path(self, path: list[int]) -> MoveIndexNode:
-        ...
-    
-    def create_linear_history(self, target_node:  MoveIndexNode) -> 'MoveHistory':
-        '''根据目标节点提取简化的历史记录'''
-        ...
-
-    def simplify_history(self) -> 'MoveHistory':
-        '''根据当前节点提取简化的历史记录'''
-        ...
-    
-    def get_current_path_length_from_branch(self) -> int:
-        ...
-
-
-class MoveTurns:
-    __slots__ = ('turns', 'active_turn')
-    def __init__(self, turns: list[str], active_turn = 0) -> None:
-        self.turns = turns
-        self.active_turn = active_turn
-    
-    def active_player(self):
-        ...
-    
-    def set_turns(self, turns: list[str]) -> None:
-        ...
-
-    def make_turn(self, turn = -1, reverse = False):
-        ...
-
-    def player_index(self, player, reverse = False):
-        ...
-    
-    def make_player_turn(self, player = AutoPlayer, reverse = False):
-        ...
-
-    def turned_player(self, player = AutoPlayer, reverse = False):
-        ...
-
-    def set_active_player(self, player = CommonPlayer):
-        ...
-
-    def remove_player(self, player):
-        ...
-
-
-
-# class PlayerClock:
-#     __slots__ = ('time_num')
-#     def __init__(self, player:str, time_num: int, signals):
-#         self.time_num = time_num
-
-#     def start(self):
-#         """开始计时"""
-#         ...
-    
-#     def stop(self):
-#         """结束计时"""
-#         ...
-    
-#     def change(self):
-#         """暂停计时"""
-#         ...
-
-
-# class ClockManager:
-    # """计时器"""
-    # __slots__ = ('game_time', 'signals')
-    # def __init__(self, signals):
-    #     ...
-
-    # def set_clock(self, player:str, time_num: int):
-    #     """设置倒计时"""
-    #     ...
-
-    # def start_clock(self, player:str = ''):
-    #     """开始倒计时"""
-    #     ...
-
-    # def change_clock(self, player:str = ''):
-    #     """暂停或继续倒计时"""
-    #     ...
-
-    # def over_clock(self, player:str = ''):
-    #     """结束倒计时"""
-    #     ...
-
-    # def get_time(self, player:str):
-    #     ...
-
-    # def set_time(self, player:str, time_num: int):
-    #     ...

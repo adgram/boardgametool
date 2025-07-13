@@ -1,4 +1,4 @@
-from .until import PieceTagEnum, LinePositionEnum
+from .until import LinePositionEnum
 from .matrixgrid import Vector2D, AxisEnum
 from typing import Callable
 
@@ -142,21 +142,21 @@ class DefaultPiecesUi:
     @classmethod
     def get_tag(cls, tag):
         match tag:
-            case PieceTagEnum.Win:
+            case "Win":
                 return PieceWinUi()
-            case PieceTagEnum.Lose:
+            case "Lose":
                 return PieceLoseUi()
-            case PieceTagEnum.Draw:
+            case "Draw":
                 return PieceDrawUi()
-            case PieceTagEnum.Active:
+            case "Active":
                 return PieceActiveUi()
-            case PieceTagEnum.Swap:
+            case "Swap":
                 return PieceSwapUi()
-            case PieceTagEnum.Move:
+            case "Move":
                 return PieceMoveUi()
-            case PieceTagEnum.Add:
+            case "Add":
                 return PieceAddUi()
-            case PieceTagEnum.Change:
+            case "Change":
                 return PieceChangeUi()
     
     @classmethod

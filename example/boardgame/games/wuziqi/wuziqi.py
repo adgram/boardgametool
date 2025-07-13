@@ -1,6 +1,6 @@
-
 from ...gridrule import *
 from pathlib import Path
+
 
 
 
@@ -32,7 +32,7 @@ class BlackWhiteUi(DefaultPiecesUi):
 class GameBlackWhite(GameData):
     """黑白棋"""
     def init_pieceattr_group(self):
-        return {"placeable": False, 'moverules': [MoveRuleEnum.Move]}
+        return {"placeable": True}
 
     def init_players(self):
         return [self.player_black(), self.player_white()]
@@ -55,7 +55,6 @@ class GameBlackWhite(GameData):
 
 
 
-
 class AppBlackWhite(Application):
     """黑白棋游戏规则"""
     def init_pieceuis(self):
@@ -73,5 +72,47 @@ class AppBlackWhite(Application):
     
     def canvas_attr(self):
         return {}
+
+
+
+
+class Game_五子棋(GameBlackWhite):
+    """五子棋"""
+    def init_matr(self):
+        return MatrixData((15, 15), structure = 8)
+
+    def init_step_func(self):
+        return {'add': (self.step_add, self.reverse_add)}
+
+    def in_row(self, pt, n = 5):
+        """判断是否存在连子"""
+        return self.matr.search_in_row(pt, n)
+
+    def test_win(self, player: PlayerData, pt):
+        """判断是否存在连子"""
+        if bool(rows := matrixgrid.flatten_as_vector(self.in_row(pt))):
+            self.update_tag_pts(player.name, rows, "Win")
+            self.do_game_over(player.name, GameOverEnum.Win)
+        self.turn_active()
+
+    def move_nil_nil(self, player: PlayerData, active_piece: 'PieceData', new_pt):
+        """在空点落子"""
+        self.do_add(player.name, active_piece.value, [new_pt])
+        self.test_win(player, new_pt)
+
+
+
+class App_五子棋(AppBlackWhite):
+    """五子棋游戏规则"""
+    def init_rule(self):
+        self.name = '五子棋'
+        return Game_五子棋()
+    
+    def grid_attr(self):
+        return {'size': (15, 15), 'canvas_size': (750, 750),
+                'padding': (80, 80), 'is_net': True}
+    
+    def canvas_attr(self):
+        return {'star_show': True, 'show_piece_index': True}
 
 

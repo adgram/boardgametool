@@ -1,6 +1,5 @@
 
-from .blackwhite import PlayerBlackWhite, AppBlackWhite
-from ...gridrule import *
+from .blackwhite import *
 from pathlib import Path
 from collections import deque
 
@@ -9,39 +8,9 @@ from collections import deque
 
 
 
-class Move_憋死牛(MoveManager):
+class Game_憋死牛(GameBlackWhite):
     """憋死牛"""
-    def init_data(self):
-        self.step_func = {'move': self.step_move}
-        self.reverse_func = {'move': self.reverse_move}
-
-    def test_win(self, player, value):
-        """模拟并测试该点落子后的情况"""
-        for pt in self.matr.search_value(value):
-            if bool(self.matr.get_point_value_nbrs(pt, 0)):
-                return self.turn_active()
-        self._step_game_over(player, GameOverEnum.Win)
-
-    def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
-        value = active_piece.value
-        if not (links := self.get_move_links(old_pt, new_pt)):
-            return self.update_tag_pts(player, [], PieceTagEnum.Move)
-        self._step_move(player, value, links)
-        self.test_win(player, 3 - value)
-
-    def get_move_links(self, old_pt, new_pt):
-        if old_pt in self.matr.get_point_nbrs(new_pt):
-            return [(old_pt, new_pt)]
-        return []
-
-
-
-
-
-class Game_憋死牛(GameData):
-    """憋死牛"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(0, 0), (2, 0)], 2: [(0, 2), (2, 2)]}
+    def init_matr(self):
         region = RegionPoints([(0, 0), (2, 0), (1, 1), (0, 2), (2, 2)])
         neighbortable = NeighborTable.link_only(
                     {Vector2D(0, 0): {Vector2D(0, 2), Vector2D(2, 0), Vector2D(1, 1)},
@@ -50,14 +19,33 @@ class Game_憋死牛(GameData):
                     Vector2D(2, 0): {Vector2D(0, 0), Vector2D(2, 2), Vector2D(1, 1)},
                     Vector2D(2, 2): {Vector2D(2, 0), Vector2D(1, 1)}}
                )
-        return {'matr': MatrixP((3, 3), region, neighbortable)}
+        return MatrixData((3, 3), region, neighbortable)
+    
+    def init_matr_pts(self):
+        return {1: [(0, 0), (2, 0)], 2: [(0, 2), (2, 2)]}
 
-    def init_move_manager(self):
-        return Move_憋死牛(self)
+    def init_step_func(self):
+        return {'move': (self.step_move, self.reverse_move)}
 
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False,
-                        'movable': [MoveRuleEnum.Move]})
+    def test_win(self, player: PlayerData, value):
+        """模拟并测试该点落子后的情况"""
+        for pt in self.matr.search_value(value):
+            if bool(self.matr.get_point_value_nbrs(pt, 0)):
+                return self.turn_active()
+        self.do_game_over(player.name, GameOverEnum.Win)
+
+    def move_self_nil(self, player: PlayerData, active_piece: 'PieceData', old_pt, new_pt):
+        value = active_piece.value
+        if not (links := self.get_move_links(old_pt, new_pt)):
+            return self.update_tag_pts(player.name, [], "Move")
+        self.do_move(player.name, value, links)
+        self.test_win(player, 3 - value)
+
+    def get_move_links(self, old_pt, new_pt):
+        if old_pt in self.matr.get_point_nbrs(new_pt):
+            return [(old_pt, new_pt)]
+        return []
+
 
 
 
@@ -83,21 +71,15 @@ class App_憋死牛(AppBlackWhite):
 
 
 
-class Game_井棋(GameData):
+class Game_井棋(Game_憋死牛):
     """井棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(0, 0), (0, 1), (0, 2)], 2: [(2, 0), (2, 1), (2, 2)]}
+    def init_matr(self):
         neighbortable = NeighborTable.structure_only({RegionRect((3, 2)): 4,
                                                       RegionRect((0, 2), (3, 3)): -2})
-        return {'matr': MatrixP((3, 3), RegionRect((3, 3)), neighbortable)}
+        return MatrixData((3, 3), RegionRect((3, 3)), neighbortable)
 
-    def init_move_manager(self):
-        return Move_憋死牛(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False,
-                        'movable': [MoveRuleEnum.Move]})
-
+    def init_matr_pts(self):
+        return {1: [(0, 0), (0, 1), (0, 2)], 2: [(2, 0), (2, 1), (2, 2)]}
 
 
 class App_井棋(AppBlackWhite):
@@ -120,11 +102,9 @@ class App_井棋(AppBlackWhite):
 
 
 
-class Game_斜方棋(GameData):
+class Game_斜方棋(Game_憋死牛):
     """斜方棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(0, 0), (1, 1), (2, 0), (3, 1), (4, 0)],
-                                  2: [(0, 4), (1, 3), (2, 4), (3, 3), (4, 4)]}
+    def init_matr(self):
         region = RegionPoints([(i, j) for i in range(5) for j in range(5) if (i+j+1)%2])
         neighbortable = NeighborTable.mathvector_only({
                 RegionPoints(((0, 0), (0, 4), (4, 0), (4, 4), (0, 2), (4, 2))): [(0, 2), (0, -2)],
@@ -133,14 +113,12 @@ class Game_斜方棋(GameData):
                 RegionPoints(((0, 2), (1, 1), (2, 0), (2, 2), (2, 4), (3, 3), (4, 2))): [(1, -1), (-1, 1)],
                 RegionPoints(((1, 1), )): [(1, 1)], RegionPoints(((3, 1), )): [(-1, 1)],
                 RegionPoints(((1, 3), )): [(1, -1)], RegionPoints(((3, 3), )): [(-1, -1)]})
-        return {'matr': MatrixP((5, 5), region, neighbortable)}
+        return MatrixData((5, 5), region, neighbortable)
 
-    def init_move_manager(self):
-        return Move_憋死牛(self)
+    def init_matr_pts(self):
+        return {1: [(0, 0), (1, 1), (2, 0), (3, 1), (4, 0)],
+                                  2: [(0, 4), (1, 3), (2, 4), (3, 3), (4, 4)]}
 
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False,
-                        'movable': [MoveRuleEnum.Move]})
 
 
 
@@ -165,31 +143,17 @@ class App_斜方棋(AppBlackWhite):
 
 
 
-class Move_四和棋(Move_憋死牛):
+
+
+class Game_四和棋(Game_憋死牛):
     """四和棋"""
-    def init_data(self):
-        self.step_func = {'move': self.step_move, 'add': self.step_add}
-        self.reverse_func = {'move': self.reverse_move, 'add': self.reverse_add}
+    def init_pieceattr_group(self):
+        return {'placeable': True, 'moverules': [MoveRuleEnum.Move]}
 
-    def test_win(self, player, value):
-        """模拟并测试该点落子后的情况"""
-        if self.game.pieces[value].num != 4:
-            return self.turn_active()
-        super().test_win(player, value)
+    def init_piece_count(self):
+        return {1: 4, 2: 4}
 
-    def move_nil_nil(self, player, active_piece, new_pt):
-        """在空点落子"""
-        value = active_piece.value
-        self._step_add(player, value, [new_pt])
-        self.test_win(player, 3 - value)
-
-
-
-
-class Game_四和棋(GameData):
-    """四和棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(0, 0)], 2: [(3, 2)]}
+    def init_matr(self):
         region = RegionPoints([(0, 0), (0, 2),
                                (1, 0), (1, 1), (1, 2),
                                (2, 0), (2, 1), (2, 2),
@@ -206,14 +170,27 @@ class Game_四和棋(GameData):
                      Vector2D(3, 0): {Vector2D(3, 2), Vector2D(2, 0)},
                      Vector2D(3, 2): {Vector2D(2, 2), Vector2D(3, 0)}}
                )
-        return {'matr': MatrixP((4, 3), region, neighbortable)}
+        return MatrixData((4, 3), region, neighbortable)
+    
+    def init_matr_pts(self):
+        return {1: [(0, 0)], 2: [(3, 2)]}
 
-    def init_move_manager(self):
-        return Move_四和棋(self)
+    def init_step_func(self):
+        return {'move': (self.step_move, self.reverse_move),
+                'add': (self.step_add, self.reverse_add)}
 
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, piece_count = {1: 4, 2: 4},
-                    pieceattr_group = {'placeable': True, 'movable': [MoveRuleEnum.Move]})
+    def test_win(self, player: PlayerData, value):
+        """模拟并测试该点落子后的情况"""
+        if self.pieces[value].num != 4:
+            return self.turn_active()
+        super().test_win(player, value)
+
+    def move_nil_nil(self, player: PlayerData, active_piece: 'PieceData', new_pt):
+        """在空点落子"""
+        value = active_piece.value
+        self.do_add(player.name, value, [new_pt])
+        self.test_win(player, 3 - value)
+
 
 
 
@@ -238,8 +215,19 @@ class App_四和棋(AppBlackWhite):
 
 
 
-class Move_两三步困阻棋(Move_憋死牛):
+class Game_两三步困阻棋(Game_憋死牛):
     """两三步困阻棋"""
+    def init_matr(self):
+        region = RegionRect((5, 5))
+        neighbortable = NeighborTable.structure_only({region: 4, RegionPoints(((2, 1), (1, 2), (3, 2), (2, 3))): 8})
+        neighbortable.add_mathvector_map({RegionPoints(((0, 1), (1, 0), (3, 4), (4, 3))): {(1, 1), (-1, -1)},
+                                         RegionPoints(((0, 3), (3, 0), (1, 4), (4, 1))): {(-1, 1), (1, -1)}})
+        return MatrixData((5, 5), region, neighbortable)
+    
+    def init_matr_pts(self):
+        return {1: [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (0, 1), (4, 1)],
+                                  2: [(0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (0, 3), (4, 3)]}
+
     def get_move_links(self, old_pt, new_pt):
         nbs = self.matr.get_point_value_nbrs(old_pt, 0)
         nb_dict = {}
@@ -253,25 +241,6 @@ class Move_两三步困阻棋(Move_憋死牛):
                 if new_pt in self.matr.get_point_value_nbrs(nb2, 0):
                     return [(old_pt, nb, nb2, new_pt)]
         return []
-
-
-class Game_两三步困阻棋(GameData):
-    """两三步困阻棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (0, 1), (4, 1)],
-                                  2: [(0, 4), (1, 4), (2, 4), (3, 4), (4, 4), (0, 3), (4, 3)]}
-        region = RegionRect((5, 5))
-        neighbortable = NeighborTable.structure_only({region: 4, RegionPoints(((2, 1), (1, 2), (3, 2), (2, 3))): 8})
-        neighbortable.add_mathvector_map({RegionPoints(((0, 1), (1, 0), (3, 4), (4, 3))): {(1, 1), (-1, -1)},
-                                         RegionPoints(((0, 3), (3, 0), (1, 4), (4, 1))): {(-1, 1), (1, -1)}})
-        return {'matr': MatrixP((5, 5), region, neighbortable)}
-
-    def init_move_manager(self):
-        return Move_两三步困阻棋(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False,
-                        'movable': [MoveRuleEnum.Move]})
 
 
 
@@ -297,16 +266,26 @@ class App_两三步困阻棋(AppBlackWhite):
 
 
 
-class Move_牵制棋(Move_憋死牛):
+class Game_牵制棋(GameBlackWhite):
     """牵制棋"""
+    def init_temporary(self):
+        return {'step' : 0}
+
+    def init_matr(self):
+        return MatrixData((5, 6), 4)
+    
+    def init_matr_pts(self):
+        return {1: [(i, j) for i in range(5) for j in range(2) if i != 2],
+                                  2: [(i, j+4) for i in range(5) for j in range(2) if i != 2]}
+
     def get_move_links(self, old_pt, new_pt):# 计算当前回合要求的步数
-        prev_step = self.grid.temporary.get('step', 0)
+        prev_step = self.temporary.get('step', 0)
         if prev_step == 0 and self.matr.get_point_value_nbrs(old_pt, 0):
             return [self.matr.search_shortest_path(old_pt, new_pt, False,
                                 lambda pt, p: self.matr.get_value(p) == 0)]
         step = 1 if prev_step == 9 else prev_step + 1
         if (link := self.test_step(old_pt, new_pt, step)):
-            self.grid.temporary['step'] = step
+            self.temporary['step'] = step
             return [link]
         return []
 
@@ -331,22 +310,6 @@ class Move_牵制棋(Move_憋死牛):
 
 
 
-class Game_牵制棋(GameData):
-    """牵制棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(i, j) for i in range(5) for j in range(2) if i != 2],
-                                  2: [(i, j+4) for i in range(5) for j in range(2) if i != 2]}
-        return {'matr': MatrixP((5, 6), 4)}
-
-    def init_move_manager(self):
-        return Move_牵制棋(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False,
-                        'movable': [MoveRuleEnum.Move]})
-
-
-
 class App_牵制棋(AppBlackWhite):
     """牵制棋游戏规则"""
     def init_rule(self):
@@ -366,8 +329,16 @@ class App_牵制棋(AppBlackWhite):
 
 
 
-class Move_连步棋(Move_牵制棋):
+
+class Game_连步棋(Game_牵制棋):
     """连步棋"""
+    def init_matr(self):
+        return MatrixData((4, 7), 4)
+    
+    def init_matr_pts(self):
+        return {1: [(i, 0) for i in range(4)],
+                2: [(i, 6) for i in range(4)]}
+
     def get_move_links(self, old_pt, new_pt):
         coll = self.matr.collection(self.matr.get_point_nbrs(old_pt))
         step = len(coll.get(1, [])) + len(coll.get(2, []))
@@ -375,22 +346,6 @@ class Move_连步棋(Move_牵制棋):
         if (link := self.test_step(old_pt, new_pt, step)):
             return [link]
         return []
-
-
-
-class Game_连步棋(GameData):
-    """连步棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(i, 0) for i in range(4)],
-                                  2: [(i, 6) for i in range(4)]}
-        return {'matr': MatrixP((4, 7), 4)}
-
-    def init_move_manager(self):
-        return Move_连步棋(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False,
-                        'movable': [MoveRuleEnum.Move]})
 
 
 
@@ -411,10 +366,19 @@ class App_连步棋(AppBlackWhite):
 
 
 
-class Move_折行棋(Move_憋死牛):
+
+
+class Game_折行棋(Game_憋死牛):
     """折行棋"""
+    def init_matr(self):
+        return MatrixData((6, 6), 4)
+
+    def init_matr_pts(self):
+        return {1: [(i, 0) for i in range(6)],
+                2: [(i, 5) for i in range(6)]}
+
     def get_move_links(self, old_pt, new_pt):
-        val = self.player_manager.active_player.active
+        val = self.active_player.active
         if not self.test_move(val, old_pt, new_pt):
             return []
         temp = [(old_pt[0], new_pt[1]), (new_pt[0], old_pt[1])]
@@ -438,21 +402,6 @@ class Move_折行棋(Move_憋死牛):
         return False
 
 
-class Game_折行棋(GameData):
-    """折行棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(i, 0) for i in range(6)],
-                                  2: [(i, 5) for i in range(6)]}
-        return {'matr': MatrixP((6, 6), 4)}
-
-    def init_move_manager(self):
-        return Move_折行棋(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False,
-                        'movable': [MoveRuleEnum.Move]})
-
-
 
 class App_折行棋(AppBlackWhite):
     """折行棋游戏规则"""
@@ -471,11 +420,9 @@ class App_折行棋(AppBlackWhite):
 
 
 
-class Game_八角棋(GameData):
+class Game_八角棋(Game_憋死牛):
     """八角棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(0, 1), (1, 4), (3, 0), (4, 3)],
-                                  2: [(0, 3), (1, 0), (3, 4), (4, 1)]}
+    def init_matr(self):
         region = RegionPoints([(2, 2), (0, 1), (1, 4), (3, 0), (4, 3), (0, 3), (1, 0), (3, 4), (4, 1)])
         neighbortable = NeighborTable.link_only(
                     {Vector2D(0, 1): {Vector2D(0, 3), Vector2D(1, 0), Vector2D(2, 2)},
@@ -490,14 +437,11 @@ class Game_八角棋(GameData):
                                      Vector2D(4, 3), Vector2D(0, 3), Vector2D(1, 0),
                                      Vector2D(3, 4), Vector2D(4, 1)}}
                )
-        return {'matr': MatrixP((5, 5), region, neighbortable)}
-
-    def init_move_manager(self):
-        return Move_憋死牛(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False,
-                        'movable': [MoveRuleEnum.Move]})
+        return MatrixData((5, 5), region, neighbortable)
+    
+    def init_matr_pts(self):
+        return {1: [(0, 1), (1, 4), (3, 0), (4, 3)],
+                                  2: [(0, 3), (1, 0), (3, 4), (4, 1)]}
 
 
 

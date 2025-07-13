@@ -2,12 +2,13 @@
     棋盘坐标点的操作
     PieceUi
 """
-from .matrixgrid import CanvasGrid, AxisEnum, Vector2D, MatrixP, RegionBase, CommonPlayer
+from .matrixgrid import CanvasGrid, AxisEnum, Vector2D, MatrixData, RegionBase
 from . import matrixgrid
-from .until import LinePositionEnum, GameOverEnum
+from .until import LinePositionEnum
 from .boardUiData import (PieceUi, DefaultPiecesUi, GridCoorUi, GridLinesUi,
                         GridEdgesUi, GridStarUi, GridTagUi)
 from .gameData import GameData
+from .moverule import GameOverEnum, CommonPlayer, AutoPlayer
 import json
 
 
@@ -196,19 +197,16 @@ class Application:
     def set_signal(self, key, func):
         self.gamerule.set_signal(key, func)
     
-    def set_piece_signal(self, key, func):
-        self.gamerule.set_piece_signal(key, func)
-    
     def set_piece_default_signal(self):
-        self.gamerule.set_piece_signal('add', self.add_pieces)
-        self.gamerule.set_piece_signal('remove', self.remove_pieces)
-        self.gamerule.set_piece_signal('change', self.change_pieces)
-        self.gamerule.set_piece_signal('swap', self.swap_pieces)
-        self.gamerule.set_piece_signal('move', self.move_pieces)
+        self.set_signal('add', self.add_pieces)
+        self.set_signal('remove', self.remove_pieces)
+        self.set_signal('change', self.change_pieces)
+        self.set_signal('swap', self.swap_pieces)
+        self.set_signal('move', self.move_pieces)
 
-    def add_default_piece_pts(self):
+    def refresh_matr_pts(self):
         """添加默认棋子"""
-        self.gamerule.add_default_piece_pts()
+        self.gamerule.move_manager.refresh_matr_pts()
 
     def click_board(self, pt = None, dot = None, name = None):
         """点击棋盘 点击组合：己方、对方、空白"""
@@ -220,13 +218,12 @@ class Application:
                     ps[_val] = l
             if ps:
                 val = list(sorted(ps.keys(), key = lambda x: ps[x]))[0]
-                self.gamerule.set_active_piece(val, name)
-                return
+                return self.gamerule.move_manager.set_active_piece(name or AutoPlayer, val)
         if (pt is None) and (dot is not None):
             pt = self.get_point(dot)
         if self.canvasboard.canvas_grid.pt_in_size(pt):
-            return self.gamerule.move_point(pt = pt, name = name)
-        return self.gamerule.move_site(pt = pt, name = name)
+            return self.gamerule.move_manager.move_point(name or AutoPlayer, pt)
+        return self.gamerule.move_manager.move_site(name or AutoPlayer, pt)
     
     def rebegin(self):
         self.gamerule.rebegin()
@@ -263,7 +260,7 @@ class Application:
         pieceui = self.pieceuis.get(value)
         return self.put_piece(pieceui, pt)
 
-    def add_pieces(self, pts_map):
+    def add_pieces(self, pts_map: dict[int, list[Vector2D]]):
         """绘制棋子"""
         return
 
@@ -284,7 +281,11 @@ class Application:
     def player_names(self):
         return [name for name in self.gamerule.players.keys() if name != CommonPlayer]
     
-    def gameover_tag_name(self, tag):
+    @property
+    def active_player_name(self):
+        return self.gamerule.active_player_name
+    
+    def gameover_tag(self, tag):
         match tag:
             case GameOverEnum.Win:
                 return '获胜'
@@ -297,10 +298,10 @@ class Application:
 
     def set_race_mode(self, is_race):
         """比赛、打谱模式"""
-        self.gamerule.set_race_mode(is_race)
+        self.gamerule.move_manager.set_race_mode(is_race)
 
     def give_up(self):
-        self.gamerule.give_up()
+        self.gamerule.move_manager.give_up()
 
     def ask_retract(self):
         return self.gamerule.move_manager.ask_retract()
@@ -313,19 +314,19 @@ class Application:
 
     def on_player(self, name):
         """设置当前棋手为1棋手"""
-        self.gamerule.player_manager.on_player(name)
+        self.gamerule.players_manager.on_player(name)
     
     def on_turns(self):
         """轮换执棋"""
-        self.gamerule.player_manager.on_turns()
+        self.gamerule.players_manager.on_turn()
 
     def set_symbol_tag(self, tag):
         """设置当前棋手为1棋手"""
-        self.gamerule.set_symbol_tag(tag)
+        self.gamerule.move_manager.set_symbol_tag(tag)
     
     def turn_player(self):
         """切换棋手"""
-        self.gamerule.player_manager.turn_player()
+        self.gamerule.turn_active()
 
     def step_back(self):
         """返回上一步"""
@@ -340,7 +341,7 @@ class Application:
         return self.canvasboard.show_piece_index
 
     def get_piece_index(self, pt):
-        return self.gamerule.get_current_path_length_from_branch()
+        return self.gamerule.move_manager.history.get_current_path_length()
 
 
 
@@ -365,8 +366,8 @@ class ObjJson:
         if isinstance(data, dict) and len(data) == 1:
             if list(data.keys())[0] == "Vector2D":
                 return Vector2D.from_json(data)
-            elif list(data.keys())[0] == "MatrixP":
-                return MatrixP.from_json(data)
+            elif list(data.keys())[0] == "MatrixData":
+                return MatrixData.from_json(data)
             elif list(data.keys())[0] == "RegionBase":
                 return RegionBase.from_json(data)
         return data

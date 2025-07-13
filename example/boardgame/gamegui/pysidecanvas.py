@@ -1,5 +1,4 @@
 
-from ..gridrule import PieceTagEnum
 from PySide6.QtWidgets import (QGraphicsItem, QGraphicsView, QGraphicsScene,
                                QGraphicsObject, QGraphicsPathItem)
 from PySide6.QtGui import QPainter, QPen, QColor, QRadialGradient, QPixmap, QPainterPath
@@ -314,14 +313,14 @@ class PiecesManager:
         self.taging_symbol = {}
         self._current_anim = {}
         self.set_piece_default_signal()
-        self.app.add_default_piece_pts()
+        self.app.refresh_matr_pts()
 
     def set_piece_default_signal(self):
-        self.app.set_piece_signal('add', self.add_pieces)
-        self.app.set_piece_signal('remove', self.remove_pieces)
-        self.app.set_piece_signal('change', self.change_pieces)
-        self.app.set_piece_signal('swap', self.swap_pieces)
-        self.app.set_piece_signal('move', self.move_pieces)
+        self.app.set_signal('add', self.add_pieces)
+        self.app.set_signal('remove', self.remove_pieces)
+        self.app.set_signal('change', self.change_pieces)
+        self.app.set_signal('swap', self.swap_pieces)
+        self.app.set_signal('move', self.move_pieces)
         self.app.set_signal('add_tag_pts', self.add_tag_pts)
         self.app.set_signal('update_tag_pts', self.update_tag_pts)
         self.app.set_signal('remove_tag_pts', self.remove_tag_pts)
@@ -426,13 +425,14 @@ class PiecesManager:
         return tag_item
     
     def _add_tag_pts(self, player, pts, tag):
+        if not pts: return
         self.taging_pieces.setdefault(tag, []).extend(
             self._create_tag_piece(tag,
             dot = self.app.get_dot(pt = pt), show = True
            ) for pt in pts)
     
     def add_tag_pts(self, player, pts, tag):
-        if tag in [PieceTagEnum.Swap, PieceTagEnum.Move]:
+        if tag in ["Swap", "Move"]:
             QTimer.singleShot(ANIM_TIME, lambda ps = [pt for pt in pts], t = tag: \
                     self._add_tag_pts(player, ps, t))
         else:

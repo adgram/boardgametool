@@ -1,31 +1,36 @@
 
-from .blackwhite import PlayerBlackWhite, AppBlackWhite
-from ...gridrule import *
+from .blackwhite import *
 from pathlib import Path
 
 
 
 
-class Move_国象跳棋(MoveManager):
+class Game_国象跳棋(GameBlackWhite):
     """国象跳棋"""
-    def init_data(self):
-        self.step_func = {'move': self.step_move}
-        self.reverse_func = {'move': self.reverse_move}
+    def init_matr(self):
+        return MatrixData((8, 8), structure = -4)
+    
+    def init_matr_pts(self):
+        return {2: [(i, j) for i in range(8) for j in range(3) if (i+j)%2],
+                1: [(i, j) for i in range(8) for j in range(5, 8) if (i+j)%2]}
 
-    def test_win(self, player, value):
+    def init_step_func(self):
+        return {'move': (self.step_move, self.reverse_move)}
+
+    def test_win(self, player: PlayerData, value):
         """模拟并测试该点落子后的情况"""
         pt0s = self.matr.search_value(0)
         for pt0 in pt0s:
             for pt in self.matr.search_value(value):
                 if bool(self.get_move_links(value, pt, pt0)):
                     return self.turn_active()
-        self._step_game_over(player, GameOverEnum.Win)
+        self.do_game_over(player.name, GameOverEnum.Win)
 
-    def move_self_nil(self, player: 'PlayerData', active_piece, old_pt, new_pt):
+    def move_self_nil(self, player: PlayerData, active_piece: 'PieceData', old_pt, new_pt):
         value = active_piece.value
         if not (links := self.get_move_links(value, old_pt, new_pt)):
-            return self.update_tag_pts(player, [], PieceTagEnum.Move)
-        self._step_move(player, value, links)
+            return self.update_tag_pts(player.name, [], "Move")
+        self.do_move(player.name, value, links)
         self.test_win(player, 3 - value)
 
     def get_move_links(self, val, old_pt, new_pt):
@@ -46,22 +51,6 @@ class Move_国象跳棋(MoveManager):
 
 
 
-class Game_国象跳棋(GameData):
-    """国象跳棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {2: [(i, j) for i in range(8) for j in range(3) if (i+j)%2],
-                                  1: [(i, j) for i in range(8) for j in range(5, 8) if (i+j)%2]}
-        return {'matr': MatrixP((8, 8), structure = -4)}
-
-    def init_move_manager(self):
-        return Move_国象跳棋(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False,
-                                        'movable': [MoveRuleEnum.Move]})
-
-
-
 class App_国象跳棋(AppBlackWhite):
     """国象跳棋游戏规则"""
     def init_rule(self):
@@ -79,8 +68,20 @@ class App_国象跳棋(AppBlackWhite):
 
 
 
-class Move_卯兔争窝棋(Move_国象跳棋):
+
+class Game_卯兔争窝棋(Game_国象跳棋):
     """卯兔争窝棋"""
+    def init_matr(self):
+        region = RegionPoints([(i, j) for i in range(5) for j in range(5) if (i+j+1)%2])
+        neighbortable = NeighborTable.structure_only({region: -4})
+        neighbortable.add_mathvector_map({RegionPoints([(i, j) for i in range(0, 5, 2) 
+                                for j in range(0, 5, 2)]): {(0, 2), (0, -2), (2, 0), (-2, 0)}})
+        return MatrixData((5, 5), region, neighbortable)
+    
+    def init_matr_pts(self):
+        return {1: [(0, 0), (1, 1), (2, 0), (3, 1), (4, 0)],
+                2: [(0, 4), (1, 3), (2, 4), (3, 3), (4, 4)]}
+
     def get_move_links(self, val, old_pt, new_pt):
         if new_pt == (4, 2):
             return []
@@ -105,24 +106,6 @@ class Move_卯兔争窝棋(Move_国象跳棋):
 
 
 
-class Game_卯兔争窝棋(GameData):
-    """卯兔争窝棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(0, 0), (1, 1), (2, 0), (3, 1), (4, 0)],
-                                  2: [(0, 4), (1, 3), (2, 4), (3, 3), (4, 4)]}
-        region = RegionPoints([(i, j) for i in range(5) for j in range(5) if (i+j+1)%2])
-        neighbortable = NeighborTable.structure_only({region: -4})
-        neighbortable.add_mathvector_map({RegionPoints([(i, j) for i in range(0, 5, 2) 
-                                for j in range(0, 5, 2)]): {(0, 2), (0, -2), (2, 0), (-2, 0)}})
-        return {'matr': MatrixP((5, 5), region, neighbortable)}
-
-    def init_move_manager(self):
-        return Move_卯兔争窝棋(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False, 'movable': [MoveRuleEnum.Move]})
-
-
 
 class App_卯兔争窝棋(AppBlackWhite):
     """卯兔争窝棋游戏规则"""
@@ -145,30 +128,22 @@ class App_卯兔争窝棋(AppBlackWhite):
 
 
 
-class Move_行蛙跳棋(Move_国象跳棋):
+class Game_行蛙跳棋(Game_国象跳棋):
     """行蛙跳棋"""
+    def init_matr(self):
+        region = RegionPoints(self.default_piece_pts[1] +  self.default_piece_pts[2] + [(1, 3), (3, 3)])
+        neighbortable = NeighborTable.structure_only({region: -4})
+        return MatrixData((5, 7), region, neighbortable)
+    
+    def init_matr_pts(self):
+        return {2: [(2, 0), (1, 1), (3, 1), (0, 2), (2, 2), (4, 2)],
+                1: [(2, 6), (1, 5), (3, 5), (0, 4), (2, 4), (4, 4)]}
+
     def get_move_links(self, val, old_pt, new_pt):
         pts = self.matr.search_line(old_pt, new_pt, structure = -4)
         if 3 <= len(pts) <= 4 and self.matr.get_value(pts[1]) and self.matr.get_value(pts[-2]):
             return [(old_pt, new_pt)]
         return []
-
-
-
-class Game_行蛙跳棋(GameData):
-    """行蛙跳棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {2: [(2, 0), (1, 1), (3, 1), (0, 2), (2, 2), (4, 2)],
-                                  1: [(2, 6), (1, 5), (3, 5), (0, 4), (2, 4), (4, 4)]}
-        region = RegionPoints(self.default_piece_pts[1] +  self.default_piece_pts[2] + [(1, 3), (3, 3)])
-        neighbortable = NeighborTable.structure_only({region: -4})
-        return {'matr': MatrixP((5, 7), region, neighbortable)}
-
-    def init_move_manager(self):
-        return Move_行蛙跳棋(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False, 'movable': [MoveRuleEnum.Move]})
 
 
 
@@ -190,12 +165,20 @@ class App_行蛙跳棋(AppBlackWhite):
 
 
 
-class Move_中象跳棋(Move_国象跳棋):
+
+class Game_中象跳棋(Game_国象跳棋):
     """中象跳棋"""
-    def test_win(self, player, value, count = 16):
-        bl = self.game.default_piece_pts[value]
+    def init_matr(self):
+        return MatrixData((9, 10), 4)
+    
+    def init_matr_pts(self):
+        return {1: [(i, j) for i in range(4) for j in range(4)],
+                2: [(i, j) for i in range(5, 9) for j in range(6, 10)]}
+
+    def test_win(self, player: PlayerData, value, count = 16):
+        bl = self.init_matr_pts()[value]
         if len(self.matr.collection(bl).get(3 - value, [])) == count:
-            self._step_game_over(player, GameOverEnum.Win)
+            self.do_game_over(player.name, GameOverEnum.Win)
         self.turn_active()
 
     def get_move_links(self, val, old_pt, new_pt):
@@ -203,22 +186,6 @@ class Move_中象跳棋(Move_国象跳棋):
             return [(old_pt, new_pt)]
         pts = self.matr.search_shortest_path(old_pt, new_pt, True)
         return [pts] if pts else []
-
-
-
-
-class Game_中象跳棋(GameData):
-    """中象跳棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(i, j) for i in range(4) for j in range(4)],
-                                  2: [(i, j) for i in range(5, 9) for j in range(6, 10)]}
-        return {'matr': MatrixP((9, 10), 4)}
-
-    def init_move_manager(self):
-        return Move_中象跳棋(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False, 'movable': [MoveRuleEnum.Move]})
 
 
 
@@ -244,9 +211,17 @@ class App_中象跳棋(AppBlackWhite):
 
 
 
-class Move_单线跳棋(Move_中象跳棋):
+
+class Game_单线跳棋(Game_中象跳棋):
     """单线跳棋"""
-    def test_win(self, player, value):
+    def init_matr(self):
+        return MatrixData((18, 1), 2)
+    
+    def init_matr_pts(self):
+        return {1: [(i, 0) for i in range(5)],
+                2: [(i, 0) for i in range(13, 18)]}
+
+    def test_win(self, player: PlayerData, value):
         super().test_win(player, value, 5)
 
     def get_move_links(self, val, old_pt, new_pt):
@@ -264,22 +239,6 @@ class Move_单线跳棋(Move_中象跳棋):
         if val == 2 and pt2[0] < pt1[0]:
             return True
         return False
-
-
-
-class Game_单线跳棋(GameData):
-    """单线跳棋"""
-    def init_gridattr(self):
-        self.default_piece_pts = {1: [(i, 0) for i in range(5)],
-                                  2: [(i, 0) for i in range(13, 18)]}
-        return {'matr': MatrixP((18, 1), 2)}
-
-    def init_move_manager(self):
-        return Move_单线跳棋(self)
-
-    def init_player_manager(self):
-        return PlayerBlackWhite(self, pieceattr_group = {'placeable': False, 'movable': [MoveRuleEnum.Move]})
-
 
 
 class App_单线跳棋(AppBlackWhite):

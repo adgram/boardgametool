@@ -32,7 +32,7 @@ class BlackWhiteUi(DefaultPiecesUi):
 class GameBlackWhite(GameData):
     """黑白棋"""
     def init_pieceattr_group(self):
-        return {"placeable": False, 'moverules': [MoveRuleEnum.Move]}
+        return {"placeable": True}
 
     def init_players(self):
         return [self.player_black(), self.player_white()]
