@@ -1,4 +1,5 @@
 from .weiqi import *
+from .leiweiqi import *
 
 
 

@@ -22,7 +22,7 @@ class Game_重力四子棋(Game_五子棋):
 
     def do_add(self, player_name: str, val, pt0, npt):
         """绘制棋盘上的棋子"""
-        self.add_move(player_name, 'add', val, [npt])
+        self.move_over(player_name, 'add', val, [npt])
         self.move_manager.add_value_pts(player_name, [pt0], val = val)
         self.move_manager.links_move([(pt0, npt)])
 
@@ -101,7 +101,7 @@ class Game_引力四子棋(Game_重力四子棋):
                 self.do_game_over(player.name, GameOverEnum.Lose)
                 return
 
-    def step_moves(self, vect):
+    def step_moves(self, vect_t):
         links = []
         def _move(pt, vect, links):
             if (val := self.matr.get_value(pt)) == 0:
@@ -114,6 +114,7 @@ class Game_引力四子棋(Game_重力四子棋):
                 self.matr.set_value(npt, val, False)
                 self.matr.set_value(pt, 0, False)
                 links.append((pt, npt))
+        vect = vect_t[0]
         match vect.point:
             case (0, 1): # y增大
                 # 每一列进行变换
@@ -134,8 +135,8 @@ class Game_引力四子棋(Game_重力四子棋):
                         _move(Vector2D(i, j), vect, links)
         self.call_signal('move', links)
 
-    def reverse_moves(self, vect):
-        self.step_moves(-vect)
+    def reverse_moves(self, vect_t):
+        self.step_moves(-vect_t[0])
 
 
 

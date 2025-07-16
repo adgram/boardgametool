@@ -1,10 +1,17 @@
-from .until import LinePositionEnum
+
 from .matrixgrid import Vector2D, AxisEnum
 from typing import Callable
+from enum import IntEnum
 
 
 VectorMapText = Callable[[tuple[int, int]|Vector2D], str]
 
+
+class LinePositionEnum(IntEnum):
+    Null = 0
+    Start = 1
+    End = 2
+    Both = 3
 
 
 class Attribute:

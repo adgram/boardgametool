@@ -49,8 +49,8 @@ class Game_反五子棋(GameBlackWhite):
         if follow:
             self.add_move(player_name, 'add', val, pts)
         else:
-            self.add_move(player_name, 'add', val, pts)
-        self.step_add(player_name, val, pts)
+            self.move_over(player_name, 'add', val, pts)
+        self.step_add(player_name, (val, pts))
 
 
 
@@ -168,19 +168,19 @@ class Game_旋转五子棋(GameBlackWhite):
                 return
 
     def do_rotate(self, player_name: str, block, origin, r):
-        self.step_rotate(player_name, block, origin, r)
         self.add_move(player_name, 'rotate', block, origin, r)
+        self.step_rotate(player_name, (block, origin, r))
 
-    def step_rotate(self, player_name: str, block, origin, r):
+    def step_rotate(self, player_name: str, block_origin_r):
         self.update_tag_pts(player_name, [], "Add")
-        pts_links = [(pt, matrixgrid.point_rotate(pt, origin, r))
-                     for pt in block]
+        pts_links = [(pt, matrixgrid.point_rotate(pt, block_origin_r[1], block_origin_r[2]))
+                     for pt in block_origin_r[0]]
         self.move_manager.links_move(pts_links)
 
-    def reverse_rotate(self, player_name: str, block, origin, r):
+    def reverse_rotate(self, player_name: str, block_origin_r):
         self.update_tag_pts(player_name, [], "Add")
-        pts_links = [(pt, matrixgrid.point_rotate(pt, origin, -r))
-                     for pt in block]
+        pts_links = [(pt, matrixgrid.point_rotate(pt, block_origin_r[1], -block_origin_r[2]))
+                     for pt in block_origin_r[0]]
         self.move_manager.links_move(pts_links)
 
     def get_block(self, xc, yc):
@@ -327,8 +327,8 @@ class Game_同步五子棋(GameBlackWhite):
             self.do_game_over(pl2.name, GameOverEnum.Win)
         elif len(row1) > 0:
             same = "灰"
-            self.step_change(same, pl1.active, 3, row1)
-            self.step_change(same, pl2.active, 3, row2)
+            self.step_change(same, (pl1.active, 3, row1))
+            self.step_change(same, (pl2.active, 3, row2))
             self.move_over(same, 'change', pl1.active, 3, row1)
             self.add_move(same, 'change', pl1.active, 3, row2)
 

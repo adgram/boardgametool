@@ -104,7 +104,7 @@ class BoardGameApp(QMainWindow):
         self.app.rebegin()
         self.app.refresh_matr_pts()
         self.resize_to_canvas()  # 添加这一行
-    
+
     def switch_game(self):
         """切换游戏"""
         # 创建启动器窗口
@@ -332,20 +332,15 @@ class GameLauncher(QDialog):
     def game_start(cls, name = ''):
         '''游戏启动入口'''
         qapp = QApplication(sys.argv)
-        if name:
-            mainWin = BoardGameApp(APPS[name]())
-            mainWin.show()
-            sys.exit(qapp.exec())
-        else:
+        if name not in APPS:
             # 创建启动器窗口
             launcher = cls(APPS)
             if launcher.exec() == QDialog.Accepted:
                 # 获取选择的游戏名称
-                game_name = launcher.start_game()
-                # 启动游戏主窗口
-                mainWin = BoardGameApp(APPS[game_name]())
-                mainWin.show()
-                sys.exit(qapp.exec())
+                name = launcher.start_game()
             else:
                 # 用户选择退出
                 sys.exit(0)
+        mainWin = BoardGameApp(APPS[name]())
+        mainWin.show()
+        sys.exit(qapp.exec())

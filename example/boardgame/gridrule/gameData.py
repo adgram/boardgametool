@@ -1,7 +1,7 @@
 
 from .matrixgrid import MatrixData, Vector2D
 from .moverule import (AutoPlayer, NullCount, PieceData, PlayerData, MoveManager,
-                       PlayersManager, MoveHistory, MatrixCallback)
+                       PlayersManager, MoveHistory, MoveCallback)
 from .clocktool import ClockManager
 
 
@@ -21,6 +21,10 @@ class GameData:
     @property
     def players_manager(self)->PlayersManager:
         return self.move_manager.players_manager
+    
+    @property
+    def move_callback(self)->MoveCallback:
+        return self.move_manager.callback
 
     @property
     def pieces(self):
@@ -42,19 +46,23 @@ class GameData:
     def begin(self):
         self.temporary = self.init_temporary()
         self.matr = self.init_matr()
-        self._init_players_manager()
+        self.move_manager.players_manager.init(
+                    self.init_players(), self.init_common_pieces(), 
+                    self.init_move_turns(), self.init_piece_count())
         self._init_move_manager()
-        self._init_clock_manager()
+        self.clock_manager.set_clocks({player.name: player.time_num
+                    for player in self.players.values()})
+        if self.move_manager.with_clock: self.clock_manager.start_clock()
         self.lag_temporary = self.init_lag_temporary()
 
     def rebegin(self):
         self.temporary = self.init_temporary()
-        self.matr = self.init_matr()
+        self.matr.set_array2d(self.init_matr().array2d)
         self.move_manager.players_manager.reset(self.init_piece_count())
-        self.move_manager.reset(True, False, self.init_matr_pts())
+        self.move_manager.reset(True, False, False, self.init_matr_pts())
         self.clock_manager.reset_clocks({player.name: player.time_num
                     for player in self.players.values()})
-        if self.move_manager.start_clock: self.clock_manager.start_clock()
+        if self.move_manager.with_clock: self.clock_manager.start_clock()
         self.lag_temporary = self.init_lag_temporary()
 
     def after_begin(self):
@@ -103,50 +111,30 @@ class GameData:
     
     def init_lag_temporary(self):
         return {}
-    
-    def _init_move_functions(self):
-        self.move_manager.add_move_function(0, self.move_nil_nil)
-        self.move_manager.add_move_function(1, self.move_nil_self)
-        self.move_manager.add_move_function(-1, self.move_nil_other)
-        self.move_manager.add_move_function(10, self.move_self_nil)
-        self.move_manager.add_move_function(-10, self.move_other_nil)
-        self.move_manager.add_move_function(11, self.move_self_self)
-        self.move_manager.add_move_function(-11, self.move_other_other)
-        self.move_manager.add_move_function(9, self.move_self_other)
-        self.move_manager.add_move_function(-9, self.move_other_self)
-    
-    def _init_matr_functions(self):
-        cb = MatrixCallback()
-        cb.collection = self.matr.collection
-        cb.contains = self.matr.region.contains
-        cb.get_valid_value = self.matr.get_valid_value
-        cb.get_value = self.matr.get_value
-        cb.set_value = self.matr.set_value
-        self.move_manager.set_matr_callback(cb)
-    
-    def _init_clock_manager(self):
-        self.clock_manager.set_clocks({player.name: player.time_num
-                    for player in self.players.values()})
-        if self.move_manager.start_clock: self.clock_manager.start_clock()
-        def _clock_func(player_name, tag):
-            if tag == "start": self.clock_manager.start_clock(player_name)
-            elif tag == "over": self.clock_manager.over_clock(player_name)
-            else: raise Exception("clock_func tag error")
-        self.move_manager.clock_func = _clock_func
 
     def _init_move_manager(self):
-        self._init_matr_functions()
-        self.move_manager.reset(True, False, self.init_matr_pts())
+        self.move_callback.collection = self.matr.collection
+        self.move_callback.contains = self.matr.region.contains
+        self.move_callback.get_valid_value = self.matr.get_valid_value
+        self.move_callback.get_value = self.matr.get_value
+        self.move_callback.set_value = self.matr.set_value
+        self.move_callback.move_site = self.move_site
+        self.move_callback.start_clock = self.clock_manager.start_clock
+        self.move_callback.over_clock = self.clock_manager.over_clock
+        
+        self.move_callback.move_point_0_0 = self.move_nil_nil
+        self.move_callback.move_point_0_1 = self.move_nil_self
+        self.move_callback.move_point_0_2 = self.move_nil_other
+        self.move_callback.move_point_1_0 = self.move_self_nil
+        self.move_callback.move_point_2_0 = self.move_other_nil
+        self.move_callback.move_point_1_1 = self.move_self_self
+        self.move_callback.move_point_2_2 = self.move_other_other
+        self.move_callback.move_point_1_2 = self.move_self_other
+        self.move_callback.move_point_2_1 = self.move_other_self
+    
+        self.move_manager.reset(True, False, False, self.init_matr_pts())
         for name, funcs in self.init_step_func().items():
             self.move_manager.add_step_function(name, *funcs)
-        self._init_move_functions()
-        self.move_manager.move_site_func = self.move_site
-
-    def _init_players_manager(self):
-        self.move_manager.players_manager.init(self.init_players(),
-                            self.init_common_pieces(), 
-                            self.init_move_turns(),
-                            self.init_piece_count())
     
     def move_site(self, player: PlayerData, pt: 'Vector2D'):
         """点击特殊点"""
@@ -210,90 +198,90 @@ class GameData:
     def do_add(self, player_name: str, val, pts):
         """绘制棋盘上的棋子"""
         self.move_over(player_name, 'add', val, pts)
-        self.step_add(player_name, val, pts)
+        self.step_add(player_name, (val, pts))
 
-    def step_add(self, player_name: str, val, pts):
+    def step_add(self, player_name: str, val_pts):
         """绘制棋盘上的棋子"""
-        self.move_manager.add_value_pts(player_name, pts, val)
-        self.update_tag_pts(player_name, pts, "Add")
+        self.move_manager.add_value_pts(player_name, val_pts[1], val_pts[0])
+        self.update_tag_pts(player_name, val_pts[1], "Add")
 
-    def reverse_add(self, player_name: str, val, pts):
+    def reverse_add(self, player_name: str, val_pts):
         """绘制棋盘上的棋子"""
         self.update_tag_pts(player_name, [], "Add")
-        self.move_manager.remove_value_pts(val, pts)
+        self.move_manager.remove_value_pts(*val_pts)
 
     def do_adds(self, player_name: str, pts_map):
         """绘制棋盘上的棋子"""
         self.move_over(player_name, 'adds', pts_map)
-        self.step_adds(player_name, pts_map)
+        self.step_adds(player_name, (pts_map, ))
 
     def step_adds(self, player_name: str, pts_map):
         """绘制棋盘上的棋子"""
-        self.move_manager.pts_add(pts_map)
-        self.update_tag_pts(player_name, sum(pts_map.values(), []), "Add")
+        self.move_manager.pts_add(pts_map[0])
+        self.update_tag_pts(player_name, sum(pts_map[0].values(), []), "Add")
 
     def reverse_adds(self, player_name: str, pts_map):
         """绘制棋盘上的棋子"""
-        self.update_tag_pts(player_name, [], "Add")
-        self.move_manager.pts_remove(sum(pts_map.values(), []))
+        self.update_tag_pts(player_name[0], [], "Add")
+        self.move_manager.pts_remove(sum(pts_map[0].values(), []))
 
-    def do_move(self, player_name: str, val, links):
-        self.step_move(player_name, val, links)
-        self.move_over(player_name, 'move', val, links)
+    def do_move(self, player_name: str, links):
+        self.move_over(player_name, 'move', links)
+        self.step_move(player_name, (links, ))
     
-    def step_move(self, player_name: str, val, links):
-        self.move_manager.links_move(links)
-        self.update_tag_pts(player_name, [ps[-1] for ps in links], "Move")
+    def step_move(self, player_name: str, val_links):
+        self.move_manager.links_move(val_links[0])
+        self.update_tag_pts(player_name, [ps[-1] for ps in val_links[0]], "Move")
     
-    def reverse_move(self, player_name: str, val, links):
+    def reverse_move(self, player_name: str, val_links):
         self.update_tag_pts(player_name, [], "Move")
-        new_links = [tuple(reversed(link)) for link in links[::-1]]
+        new_links = [tuple(reversed(link)) for link in val_links[0][::-1]]
         self.move_manager.links_move(new_links)
 
     def do_kill(self, player_name: str, val, new_val, links):
         """绘制棋盘上的棋子"""
-        self.step_kill(player_name, val, new_val, links)
         self.move_over(player_name, 'kill', val, new_val, links)
+        self.step_kill(player_name, (val, new_val, links))
 
-    def step_kill(self, player_name: str, val, new_val, links):
+    def step_kill(self, player_name: str, old_new_links):
         """绘制棋盘上的棋子"""
-        newpts = [pts[-1] for pts in links]
-        self.move_manager.remove_value_pts(new_val, newpts)
-        self.move_manager.links_move(links)
+        newpts = [pts[-1] for pts in old_new_links[2]]
+        self.move_manager.remove_value_pts(old_new_links[1], newpts)
+        self.move_manager.links_move(old_new_links[2])
         self.update_tag_pts(player_name, newpts, "Move")
 
-    def reverse_kill(self, player_name: str, val, new_val, links):
+    def reverse_kill(self, player_name: str, old_new_links):
         """绘制棋盘上的棋子"""
         self.update_tag_pts(player_name, [], "Move")
-        new_links = [tuple(reversed(link)) for link in links[::-1]]
+        new_links = [tuple(reversed(link)) for link in old_new_links[2][::-1]]
         oldpts = [pts[0] for pts in new_links]
         self.move_manager.links_move(new_links)
-        self.move_manager.add_value_pts(None, oldpts, new_val)
+        self.move_manager.add_value_pts(None, oldpts, old_new_links[1])
 
     def do_remove(self, player_name: str, val, pts):
-        self.step_remove(player_name, val, pts)
         self.move_over(player_name, 'remove', val, pts)
+        self.step_remove(player_name, (val, pts))
 
-    def step_remove(self, player_name: str, val, pts):
-        self.move_manager.remove_value_pts(val, pts)
+    def step_remove(self, player_name: str, val_pts):
+        self.move_manager.remove_value_pts(*val_pts)
 
-    def reverse_remove(self, player_name: str, val, pts):
+    def reverse_remove(self, player_name: str, val_pts):
         self.update_tag_pts(player_name, [], "Add")
-        self.move_manager.add_value_pts(player_name, pts, val)
+        self.move_manager.add_value_pts(player_name, val_pts[1], val_pts[0])
 
-    def do_change(self, player_name: str, val, new_val, pts):
+    def do_change(self, player_name: str, old_val, new_val, pts):
         """绘制棋盘上的棋子"""
-        self.step_change(player_name, new_val, val, pts)
-        self.move_over(player_name, 'change', new_val, val, pts)
+        self.move_over(player_name, 'change', (old_val, new_val, pts))
+        self.step_change(player_name, old_val, new_val, pts)
 
-    def step_change(self, player_name: str, old_val, val, pts):
+    def step_change(self, player_name: str, old_new_pts):
         """绘制棋盘上的棋子"""
-        self.move_manager.change_value_pts(val, pts)
-        self.update_tag_pts(player_name, pts, "Change")
+        self.move_manager.change_value_pts(old_new_pts[1], old_new_pts[2])
+        self.update_tag_pts(player_name, old_new_pts[2], "Change")
 
-    def reverse_change(self, player_name: str, old_val, val, pts):
+    def reverse_change(self, player_name: str, old_new_pts):
         """绘制棋盘上的棋子"""
-        self.move_manager.change_value_pts(old_val, pts)
+        self.move_manager.change_value_pts(old_new_pts[0], old_new_pts[2])
 
     def do_game_over(self, player_name: str, tag, single = False):
         self.move_manager.do_game_over(player_name, tag, single)
@@ -340,11 +328,7 @@ class GameData:
         """保存游戏"""
         data = {}
         data['matr'] = self.matr.array2d
-        data['over'] = self.move_manager.is_over
-        if current:
-            data['history'] = self.move_manager.history.simplify_history().to_json()
-        else:
-            data['history'] = self.move_manager.history.to_json()
+        data['move'] = self.move_manager.serialize(current)
         data['temporary'] = self.temporary
         data['lag_temporary'] = self.lag_temporary
         return data
@@ -359,7 +343,7 @@ class GameData:
     
     def load_data(self, data):
         self.matr.set_array2d(data['matr'])
-        self.move_manager.is_over = data['over']
-        self.move_manager.set_history(MoveHistory.from_json(data['history'], False))
+        self.move_manager.with_serialize(data['move'])
+        self.move_manager.in_race = False
         self.temporary = data['temporary']
         self.lag_temporary = data['lag_temporary']

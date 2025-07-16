@@ -4,12 +4,33 @@
 """
 from .matrixgrid import CanvasGrid, AxisEnum, Vector2D, MatrixData, RegionBase
 from . import matrixgrid
-from .until import LinePositionEnum
 from .boardUiData import (PieceUi, DefaultPiecesUi, GridCoorUi, GridLinesUi,
-                        GridEdgesUi, GridStarUi, GridTagUi)
+                        GridEdgesUi, GridStarUi, GridTagUi, LinePositionEnum)
 from .gameData import GameData
 from .moverule import GameOverEnum, CommonPlayer, AutoPlayer
 import json
+from enum import IntEnum
+
+
+class RegionCircleEnum(IntEnum):
+    """区域循环类型：无循环，x循环，y循环，xy双循环"""
+    P = 0
+    X = 1
+    Y = 2
+    XY = 3
+
+
+# class PieceTagEnum(IntEnum):
+#     """棋子标记"""
+#     Active = 0
+#     Win = 1
+#     Lose = 2
+#     Draw = 3  # 平局
+#     Stop = 4  # 意外停止
+#     Add = 5
+#     Change = 6
+#     Swap = 7
+#     Move = 8
 
 
 
@@ -51,7 +72,8 @@ class CanvasBoard:
                 height = self.canvas_grid.x_cell//3,
                 text = kwargs.get('tagtext', ''),
                 icon = kwargs.get('tagicon', ''),
-                iconsize = kwargs.get('iconsize', (self.canvas_grid.x_cell, self.canvas_grid.x_cell)),
+                iconsize = kwargs.get('iconsize', (self.canvas_grid.x_cell,
+                                                   self.canvas_grid.x_cell)),
                 textfunc = kwargs.get('tagtextfunc', lambda pt: ''),
                 iconfunc = kwargs.get('tagiconfunc', lambda pt: '')
                ))
@@ -160,7 +182,7 @@ class Application:
         self.canvasboard = canvasboard or self.get_canvas()
         x_cell = self.canvasboard.canvas_grid.x_cell
         self.pieceuis.set_data(self.gamerule.pieces, 
-                radius = x_cell//2-x_cell//20 or 50)
+                radius = x_cell//2-x_cell//15 or 50)
         self.tagui = tagui or GridTagUi(
                 color = self.canvasboard.bgedgeui.color,
                 height = x_cell//3
@@ -174,7 +196,13 @@ class Application:
     def init_pieceuis(self):
         return
 
-    def init_grid(self):
+    def grid_attr(self):
+        return {}
+    
+    def init_canvasattr(self):
+        return {}
+
+    def get_canvas(self):
         grid = {'size': (9, 9), 'canvas_size': (750, 750), 'padding': (80, 80), 
                 'is_net': True, 'boundless': True, 'coordinate': None,
                 'origin': (0, 0), 'obliquity': 1j, 'centered': True}
@@ -183,26 +211,13 @@ class Application:
         grid['canvas_size'] = Vector2D(grid['canvas_size'])
         grid['padding'] = Vector2D(grid['padding'])
         grid['origin'] = Vector2D(grid['origin'])
-        return CanvasGrid(**grid)
-    
-    def grid_attr(self):
-        return {}
-    
-    def init_canvasattr(self):
-        return {}
-
-    def get_canvas(self):
-        return CanvasBoard(canvas_grid = self.init_grid(), **self.init_canvasattr())
+        return CanvasBoard(canvas_grid = CanvasGrid(**grid), **self.init_canvasattr())
     
     def set_signal(self, key, func):
         self.gamerule.set_signal(key, func)
     
     def set_piece_default_signal(self):
-        self.set_signal('add', self.add_pieces)
-        self.set_signal('remove', self.remove_pieces)
-        self.set_signal('change', self.change_pieces)
-        self.set_signal('swap', self.swap_pieces)
-        self.set_signal('move', self.move_pieces)
+        return
 
     def refresh_matr_pts(self):
         """添加默认棋子"""
@@ -259,23 +274,6 @@ class Application:
         """绘制棋子"""
         pieceui = self.pieceuis.get(value)
         return self.put_piece(pieceui, pt)
-
-    def add_pieces(self, pts_map: dict[int, list[Vector2D]]):
-        """绘制棋子"""
-        return
-
-    def remove_pieces(self, pts):
-        """清除棋盘上的棋子"""
-        pass
-    
-    def change_pieces(self, pts_map):
-        pass
-    
-    def swap_pieces(self, pts_linkss):
-        pass
-    
-    def move_pieces(self, pts_linkss):
-        pass
 
     @property
     def player_names(self):

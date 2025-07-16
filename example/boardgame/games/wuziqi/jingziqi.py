@@ -71,10 +71,10 @@ class Game_六消井字棋(Game_井字棋):
         dq = self.temporary['pieces'][player_name]
         dq.append(pts[0])
         self.move_over(player_name, 'add', val, pts)
-        self.step_add(player_name, val, pts)
+        self.step_add(player_name, (val, pts))
         if len(dq) >= 4:
             old = dq.popleft()
-            self.step_remove(player_name, val, [old])
+            self.step_remove(player_name, (val, [old]))
             self.add_move(player_name, 'remove', val, [old])
 
     def move_nil_nil(self, player: PlayerData, active_piece: 'PieceData', new_pt):

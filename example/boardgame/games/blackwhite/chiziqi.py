@@ -53,11 +53,11 @@ class Game_两吏拿一差(GameBlackWhite):
         pts1 = ps1.get(1, []).extend(ps2.get(1, []))
         pts2 = ps1.get(2, []).extend(ps2.get(2, []))
         if pts1:
-            self.step_remove(player_name, 1, pts1)
-            self.add_move(player_name, 'remove', 1, pts1)
+            self.step_remove(player_name, (1, pts1))
+            self.move_over(player_name, 'remove', 1, pts1)
         if pts2:
-            self.step_remove(player_name, 2, pts2)
-            self.add_move(player_name, 'remove', 2, pts2)
+            self.step_remove(player_name, (2, pts2))
+            self.move_over(player_name, 'remove', 2, pts2)
 
     def _remove_step(self, pt):
         remvs = {1:[], 2:[]}

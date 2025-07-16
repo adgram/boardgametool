@@ -739,7 +739,7 @@ class MatrixData:
         ...
 
     @property
-    def region(self):
+    def region(self) -> RegionBase:
         return self._region
 
     @property

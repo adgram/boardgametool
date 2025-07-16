@@ -57,8 +57,8 @@ class Game_黑白棋(GameBlackWhite):
         """绘制棋盘上的棋子"""
         self.move_over(player_name, 'add', val, pts)
         self.add_move(player_name, 'change', old_val, val, row)
-        self.step_add(player_name, val, pts)
-        self.step_change(player_name, old_val, val, row)
+        self.step_add(player_name, (val, pts))
+        self.step_change(player_name, (old_val, val, row))
 
 
 
@@ -124,11 +124,11 @@ class Game_俘虏棋(GameBlackWhite):
 
     def do_add(self, player_name: str, val, pts, old_val, row):
         """绘制棋盘上的棋子"""
-        self.add_move(player_name, 'add', val, pts)
-        self.step_add(player_name, val, pts)
+        self.move_over(player_name, 'add', val, pts)
+        self.step_add(player_name, (val, pts))
         if row:
             self.add_move(player_name, 'change', old_val, val, row)
-            self.step_change(player_name, old_val, val, row)
+            self.step_change(player_name, (old_val, val, row))
 
 
 
